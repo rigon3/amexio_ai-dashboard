@@ -1,0 +1,29 @@
+# Handoff / internal planning docs
+CLAUDE_CODE_HANDOFF.md
+
+# Synthetic data files (not for version control)
+backend/data/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+env/
+*.egg-info/
+dist/
+build/
+
+# Node / frontend
+node_modules/
+.next/
+dist/
+
+# Environment
+.env
+.env.local
+
+# OS
+.DS_Store
+Thumbs.db
