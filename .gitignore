@@ -1,9 +1,6 @@
 # Handoff / internal planning docs
 CLAUDE_CODE_HANDOFF.md
 
-# Synthetic data files (not for version control)
-backend/data/
-
 # Python
 __pycache__/
 *.py[cod]
