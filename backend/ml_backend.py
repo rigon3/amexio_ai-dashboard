@@ -1,10 +1,3 @@
-"""Forecast adapter for the training budget model.
-
-The backend calls this module for a budget forecast. Today it ships with a
-stub model so the API works before a trained artifact exists. Once a real
-model is saved to disk, the adapter will load it automatically.
-"""
-
 from __future__ import annotations
 
 import os
