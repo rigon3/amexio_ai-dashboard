@@ -29,6 +29,10 @@ def aggregate_training_budget() -> dict:
             budget=("Totaal opleidingsbudget", "sum"),
             spent=("spent", "sum"),
             remaining=("Resterend budget", "sum"),
+            budget_line_1=("Budget #1", "sum"),
+            budget_line_2=("Budget #2", "sum"),
+            budget_line_3=("Budget #3", "sum"),
+            budget_line_4=("Budget #4", "sum"),
         )
         .reset_index()
     )
@@ -41,6 +45,10 @@ def aggregate_training_budget() -> dict:
             "budget": float(round(row["budget"], 2)),
             "spent": float(round(row["spent"], 2)),
             "remaining": float(round(row["remaining"], 2)),
+            "budget_line_1": float(round(row["budget_line_1"], 2)),
+            "budget_line_2": float(round(row["budget_line_2"], 2)),
+            "budget_line_3": float(round(row["budget_line_3"], 2)),
+            "budget_line_4": float(round(row["budget_line_4"], 2)),
             "utilisation_pct": float(row["utilisation_pct"]),
             "share_of_total_spent_pct": float(round(row["spent"] / total_spent * 100, 1)),
         }

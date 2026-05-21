@@ -1,5 +1,6 @@
 import requests
 import streamlit as st
+import pandas as pd
 
 API_URL = "http://127.0.0.1:8000"
 
@@ -86,3 +87,51 @@ if "forecast" in st.session_state:
     metric_col.metric("Forecast Budget", f"€{forecast['forecast_budget']:,.0f}")
     status_col.metric("Model Ready", "Yes" if forecast.get("model_ready") else "No")
     st.caption(forecast.get("note", ""))
+    st.subheader("Per-department forecasts")
+    rows = []
+    for d in forecast.get("by_department_forecasts", []):
+        rows.append({"Department": d["name"], "Forecast Budget (€)": f"€{d['forecast_budget']:,.0f}"})
+    if rows:
+        st.table(rows)
+
+    # ── Projection charts
+    st.subheader("Forecast projections")
+
+    def _linear_projection(current: float, target: float, periods: int = 6) -> pd.DataFrame:
+        steps = periods - 1
+        values = [current + (target - current) * (i / steps) for i in range(periods)]
+        idx = ["Now"] + [f"T+{i}" for i in range(1, periods)]
+        return pd.DataFrame({"Forecast": values}, index=idx)
+
+    # Company-level projection
+    company_current = data.get("total_budget", 0.0)
+    company_target = forecast.get("forecast_budget", company_current)
+    company_df = _linear_projection(company_current, company_target, periods=6)
+    st.caption("Company-level budget: current vs forecast")
+    st.line_chart(company_df)
+
+    # Department selector and projection
+    dept_names = [d["name"] for d in data.get("by_department", [])]
+    if dept_names:
+        sel = st.selectbox("Select department to view projection", options=dept_names)
+        # find current and forecast for selection
+        current_dept = next((d for d in data.get("by_department", []) if d["name"] == sel), None)
+        forecast_dept = next((d for d in forecast.get("by_department_forecasts", []) if d.get("name") == sel), None)
+        if current_dept and forecast_dept:
+            cur = current_dept.get("budget", 0.0)
+            tgt = forecast_dept.get("forecast_budget", cur)
+            st.caption(f"{sel}: current budget vs forecast")
+            st.line_chart(_linear_projection(cur, tgt, periods=6))
+
+    # Quick comparison bar chart for all departments: current vs forecast
+    comp_rows = []
+    for d in data.get("by_department", []):
+        name = d["name"]
+        cur = d.get("budget", 0.0)
+        fobj = next((x for x in forecast.get("by_department_forecasts", []) if x.get("name") == name), None)
+        tgt = fobj.get("forecast_budget", cur) if fobj else cur
+        comp_rows.append({"Department": name, "Current": cur, "Forecast": tgt})
+    if comp_rows:
+        comp_df = pd.DataFrame(comp_rows).set_index("Department")
+        st.caption("Current vs Forecast by department")
+        st.bar_chart(comp_df)
