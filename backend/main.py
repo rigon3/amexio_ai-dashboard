@@ -2,7 +2,6 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
 from data import aggregate_training_budget
-from ml_backend import forecast_training_budget
 from llm import generate_summary
 
 app = FastAPI()
@@ -28,12 +27,3 @@ def summary():
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"LLM error: {e}")
     return result
-
-
-@app.get("/forecast")
-def forecast():
-    data = aggregate_training_budget()
-    try:
-        return forecast_training_budget(data)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Forecast error: {e}")

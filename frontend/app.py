@@ -65,24 +65,3 @@ if "summary" in st.session_state:
         st.write(st.session_state["summary"]["brief"])
     with standard_tab:
         st.write(st.session_state["summary"]["standard"])
-
-st.divider()
-
-# ── Budget forecast panel ───────────────────────────────────────────────────
-st.subheader("Budget Forecast")
-
-if st.button("Generate Forecast", type="secondary"):
-    with st.spinner("Forecasting next training budget…"):
-        try:
-            r = requests.get(f"{API_URL}/forecast")
-            r.raise_for_status()
-            st.session_state["forecast"] = r.json()
-        except Exception as e:
-            st.error(f"Forecast request failed: {e}")
-
-if "forecast" in st.session_state:
-    forecast = st.session_state["forecast"]
-    metric_col, status_col = st.columns([2, 1])
-    metric_col.metric("Forecast Budget", f"€{forecast['forecast_budget']:,.0f}")
-    status_col.metric("Model Ready", "Yes" if forecast.get("model_ready") else "No")
-    st.caption(forecast.get("note", ""))
