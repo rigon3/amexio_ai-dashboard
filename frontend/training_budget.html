@@ -12,14 +12,6 @@
     :root { --navy:#1B2B3B; --orange:#E8642A; --light-bg:#F4F6F9; --border:#E2E8EF; --muted:#6B7E8F; }
     body { background-color:var(--light-bg); }
 
-    .sidebar { background:var(--navy); min-height:100vh; width:220px; flex-shrink:0; display:flex; flex-direction:column; }
-    .nav-item { display:flex; align-items:center; gap:.75rem; padding:.7rem 1.25rem; color:#AABDCC; border-radius:8px; margin:.15rem .75rem; cursor:pointer; font-size:.9rem; font-weight:500; text-decoration:none; transition:all .15s; }
-    .nav-item:hover { background:rgba(255,255,255,.07); color:white; }
-    .nav-item.active { background:rgba(232,100,42,.15); color:white; }
-
-    .upload-btn { background:var(--orange); color:white; border:none; border-radius:10px; padding:.7rem 1rem; font-weight:600; width:calc(100% - 1.5rem); margin:0 .75rem 1.5rem; cursor:pointer; font-size:.9rem; display:flex; align-items:center; justify-content:center; gap:.5rem; transition:opacity .15s; }
-    .upload-btn:hover { opacity:.9; }
-
     .time-tab { padding:.45rem 1.25rem; border-radius:8px; font-weight:600; font-size:.88rem; cursor:pointer; border:1px solid var(--border); background:white; color:var(--navy); transition:all .15s; }
     .time-tab.active { background:var(--orange); color:white; border-color:var(--orange); }
 
@@ -49,8 +41,6 @@
 </head>
 <body>
 <div style="display:flex;min-height:100vh;">
-
-
 
   <!-- MAIN -->
   <main style="flex:1;padding:2rem 2.5rem;overflow-y:auto;max-width:1200px;margin:0 auto;">
@@ -93,7 +83,61 @@
       </div>
     </div>
 
-    <!-- Forecast Cards — REPLACE values with real ML predictions from GET /forecast -->
+    <!-- AI Insights — moved to TOP, above chart and table -->
+    <div class="ai-card" style="margin-bottom:1.75rem;">
+      <div style="color:white;font-weight:700;font-size:1rem;margin-bottom:1rem;display:flex;align-items:center;gap:.5rem;">
+        <svg width="18" height="18" fill="none" stroke="#E8642A" stroke-width="2" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        AI Insights — Training Budget Analysis
+      </div>
+      <div style="display:flex;gap:0;border-bottom:1px solid rgba(255,255,255,.1);margin-bottom:1rem;">
+        <button class="summary-tab active" onclick="switchTab(this,'brief')">Brief Summary</button>
+        <button class="summary-tab" onclick="switchTab(this,'standard')">Standard Summary</button>
+      </div>
+
+      <!-- REPLACE: inject response["brief"] from POST /summary here -->
+      <div class="summary-panel active" id="panel-brief">
+        <p style="color:#AABDCC;font-size:.9rem;line-height:1.75;">
+          April 2026 training expenditure reaches €6,140 total with Engineering as the highest spending department at €2,060.<br><br>
+          Average department utilization stands at 77% with room for HR and Finance to increase investment.
+        </p>
+      </div>
+
+      <!-- REPLACE: inject response["standard"] from POST /summary here -->
+      <div class="summary-panel" id="panel-standard">
+        <p style="color:#AABDCC;font-size:.9rem;line-height:1.75;">
+          Training budget utilization for April 2026 stands at 77%, with a total expenditure of €6,140 out of €7,950 allocated across all departments.<br><br>
+          Engineering leads in absolute spending at €2,060 with an 81% utilization rate, followed by Sales at €1,330 and Marketing at €1,200. Operations and Finance show moderate utilization at 79% and 77% respectively.<br><br>
+          HR registers the lowest utilization at 65%, consistent with its support function role. With €1,810 remaining across the organization, there is still capacity for additional training investment before the period closes.
+        </p>
+      </div>
+
+      <!-- REPLACE: connect to POST /summary and inject real response into panels -->
+      <button class="gen-btn" onclick="generateSummary()">Generate Insights</button>
+    </div>
+
+    <!-- Chart card — REPLACE departmentData with real data from GET /data -->
+    <div class="card" style="margin-bottom:1.5rem;">
+      <div class="card-header">Budget Utilization by Department</div>
+      <div style="padding:1.25rem;">
+        <canvas id="budgetChart" height="90"></canvas>
+      </div>
+    </div>
+
+    <!-- Department Table — REPLACE with real data from GET /data -->
+    <div class="card" style="margin-bottom:1.5rem;">
+      <div class="card-header">Department Breakdown</div>
+      <table>
+        <thead>
+          <tr>
+            <th>Department</th><th>Total Budget</th>
+            <th>Spent</th><th>Remaining</th><th>Utilization</th>
+          </tr>
+        </thead>
+        <tbody id="table-body"></tbody>
+      </table>
+    </div>
+
+    <!-- ML Forecast — moved to BOTTOM -->
     <div style="margin-bottom:1.5rem;">
       <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.85rem;">
         <svg width="16" height="16" fill="none" stroke="#E8642A" stroke-width="2" viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
@@ -128,117 +172,58 @@
       </div>
     </div>
 
-    <!-- Chart card — REPLACE employeeData with real data from GET /data -->
-    <div class="card" style="margin-bottom:1.5rem;">
-      <div class="card-header">Budget Utilization by Employee</div>
-      <div style="padding:1.25rem;">
-        <canvas id="budgetChart" height="90"></canvas>
-      </div>
-    </div>
-
-    <!-- Table — REPLACE with real data from GET /data -->
-    <div class="card" style="margin-bottom:1.5rem;">
-      <div class="card-header">Employee Breakdown</div>
-      <table>
-        <thead>
-          <tr>
-            <th>Employee Name</th><th>Department</th><th>Total Budget</th>
-            <th>Spent</th><th>Remaining</th><th>Utilization</th>
-          </tr>
-        </thead>
-        <tbody id="table-body"></tbody>
-      </table>
-    </div>
-
-    <!-- AI Insights -->
-    <div class="ai-card">
-      <div style="color:white;font-weight:700;font-size:1rem;margin-bottom:1rem;display:flex;align-items:center;gap:.5rem;">
-        <svg width="18" height="18" fill="none" stroke="#E8642A" stroke-width="2" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-        AI Insights — Training Budget Analysis
-      </div>
-      <div style="display:flex;gap:0;border-bottom:1px solid rgba(255,255,255,.1);margin-bottom:1rem;">
-        <button class="summary-tab active" onclick="switchTab(this,'brief')">Brief Summary</button>
-        <button class="summary-tab" onclick="switchTab(this,'standard')">Standard Summary</button>
-      </div>
-
-      <!-- REPLACE: inject response["brief"] from POST /summary here -->
-      <div class="summary-panel active" id="panel-brief">
-        <p style="color:#AABDCC;font-size:.9rem;line-height:1.75;">
-          April 2026 training expenditure reaches €6,140 total with top spenders at €730.<br><br>
-          Average per-employee utilization stands at 80% with room for HR department growth.
-        </p>
-      </div>
-
-      <!-- REPLACE: inject response["standard"] from POST /summary here -->
-      <div class="summary-panel" id="panel-standard">
-        <p style="color:#AABDCC;font-size:.9rem;line-height:1.75;">
-          Training budget utilization for April 2026 stands at 77%, with a total expenditure of €6,140 out of €7,950 allocated across all departments.<br><br>
-          Engineering leads in absolute spending at €2,060, driven by top individual spenders Michael Chen (84%) and James Wilson (81%). Marketing and Sales follow closely with utilization rates of 77% and 81% respectively.<br><br>
-          HR registers the lowest utilization at 65%, consistent with its support function role and smaller team size. With €1,810 remaining, there is still capacity for additional training investment before the period closes.
-        </p>
-      </div>
-
-      <!-- REPLACE: connect to POST /summary and inject real response into panels -->
-      <button class="gen-btn" onclick="generateSummary()">Generate Insights</button>
-    </div>
-
   </main>
 </div>
 
 <script>
   // ═══════════════════════════════════════════════════════════════════════
   // HARDCODED DATA — REPLACE this array with real data from GET /data
-  // Structure must stay the same: name, department, budget, spent, remaining, util
+  // Structure: department, budget, spent, remaining, util
   // ═══════════════════════════════════════════════════════════════════════
-  const employeeData = [
-    { name:"Sarah Johnson",   department:"Engineering", budget:900,  spent:620, remaining:280, util:69 },
-    { name:"Michael Chen",    department:"Engineering", budget:850,  spent:710, remaining:140, util:84 },
-    { name:"Emily Rodriguez", department:"Marketing",   budget:750,  spent:580, remaining:170, util:77 },
-    { name:"David Kim",       department:"Sales",       budget:800,  spent:650, remaining:150, util:81 },
-    { name:"Lisa Anderson",   department:"HR",          budget:650,  spent:420, remaining:230, util:65 },
-    { name:"James Wilson",    department:"Engineering", budget:900,  spent:730, remaining:170, util:81 },
-    { name:"Maria Garcia",    department:"Finance",     budget:700,  spent:540, remaining:160, util:77 },
-    { name:"Robert Taylor",   department:"Operations",  budget:750,  spent:590, remaining:160, util:79 },
-    { name:"Jennifer Lee",    department:"Marketing",   budget:800,  spent:620, remaining:180, util:78 },
-    { name:"William Brown",   department:"Sales",       budget:850,  spent:680, remaining:170, util:80 },
+  const departmentData = [
+    { department:"Engineering", budget:2650, spent:2060, remaining:590,  util:78 },
+    { department:"Marketing",   budget:1550, spent:1200, remaining:350,  util:77 },
+    { department:"Sales",       budget:1650, spent:1330, remaining:320,  util:81 },
+    { department:"HR",          budget:650,  spent:420,  remaining:230,  util:65 },
+    { department:"Finance",     budget:700,  spent:540,  remaining:160,  util:77 },
+    { department:"Operations",  budget:750,  spent:590,  remaining:160,  util:79 },
   ];
 
   // Build table rows
   const tbody = document.getElementById("table-body");
-  employeeData.forEach(e => {
+  departmentData.forEach(d => {
     tbody.innerHTML += `<tr>
-      <td style="font-weight:500">${e.name}</td>
-      <td style="color:var(--muted)">${e.department}</td>
-      <td>€${e.budget.toLocaleString()}</td>
-      <td class="spent-val">€${e.spent.toLocaleString()}</td>
-      <td>€${e.remaining.toLocaleString()}</td>
-      <td><span class="util-badge">${e.util}%</span></td>
+      <td style="font-weight:600">${d.department}</td>
+      <td>€${d.budget.toLocaleString()}</td>
+      <td class="spent-val">€${d.spent.toLocaleString()}</td>
+      <td>€${d.remaining.toLocaleString()}</td>
+      <td><span class="util-badge">${d.util}%</span></td>
     </tr>`;
   });
 
-  // Build chart — bar (spent+remaining) + line (utilization %)
+  // Build chart
   const ctx = document.getElementById("budgetChart").getContext("2d");
   new Chart(ctx, {
     data: {
-      labels: employeeData.map(e => e.name.split(" ")[0]),
+      labels: departmentData.map(d => d.department),
       datasets: [
         {
           type:"line", label:"Spent (€)",
-          data: employeeData.map(e => e.spent),
+          data: departmentData.map(d => d.spent),
           borderColor:"#E8642A", backgroundColor:"rgba(232,100,42,.08)",
           borderWidth:2.5, pointBackgroundColor:"#E8642A",
           pointRadius:5, tension:0.4, fill:true, yAxisID:"y"
         },
         {
           type:"line", label:"Remaining (€)",
-          data: employeeData.map(e => e.remaining),
+          data: departmentData.map(d => d.remaining),
           borderColor:"#1B2B3B", backgroundColor:"rgba(27,43,59,.06)",
           borderWidth:2.5, pointBackgroundColor:"#1B2B3B",
           pointRadius:5, tension:0.4, fill:true, yAxisID:"y"
         },
         {
           type:"line", label:"Utilization (%)",
-          data: employeeData.map(e => e.util),
+          data: departmentData.map(d => d.util),
           borderColor:"#27AE60", backgroundColor:"rgba(39,174,96,.08)",
           borderWidth:2.5, pointBackgroundColor:"#27AE60",
           pointRadius:5, tension:0.4, fill:false, yAxisID:"y2"
@@ -285,9 +270,6 @@
     setTimeout(() => {
       btn.textContent = "Generate Insights";
       btn.disabled = false;
-      // REPLACE these two lines with real API response:
-      // document.getElementById("panel-brief").querySelector("p").innerHTML = response.brief;
-      // document.getElementById("panel-standard").querySelector("p").innerHTML = response.standard;
       alert("TODO: connect to POST /summary endpoint");
     }, 1500);
   }
