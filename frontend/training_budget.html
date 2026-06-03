@@ -113,14 +113,14 @@
 
       <!-- Brief summary panel — content replaced by real LLM output on Generate click -->
       <div class="summary-panel active" id="panel-brief">
-        <p style="color:#AABDCC;font-size:.9rem;line-height:1.75;">
+        <p style="color:#FFFFFF;font-size:.9rem;line-height:1.75;">
           Click "Generate Insights" to generate a real AI summary using the local Mistral model.
         </p>
       </div>
 
       <!-- Standard summary panel — content replaced by real LLM output on Generate click -->
       <div class="summary-panel" id="panel-standard">
-        <p style="color:#AABDCC;font-size:.9rem;line-height:1.75;">
+        <p style="color:#FFFFFF;font-size:.9rem;line-height:1.75;">
           Click "Generate Insights" to generate a real AI summary using the local Mistral model.
         </p>
       </div>
@@ -271,25 +271,25 @@
         labels: departments.map(d => d.name),
         datasets: [
           {
-            type:"line", label:"Spent (€)",
+            type:"bar", label:"Spent (€)",
             data: departments.map(d => d.spent),
-            borderColor:"#E8642A", backgroundColor:"rgba(232,100,42,.08)",
-            borderWidth:2.5, pointBackgroundColor:"#E8642A",
-            pointRadius:5, tension:0.4, fill:true, yAxisID:"y"
+            backgroundColor:"#E8642A",
+            borderRadius:5, borderSkipped:false,
+            yAxisID:"y"
           },
           {
-            type:"line", label:"Remaining (€)",
+            type:"bar", label:"Remaining (€)",
             data: departments.map(d => d.remaining),
-            borderColor:"#1B2B3B", backgroundColor:"rgba(27,43,59,.06)",
-            borderWidth:2.5, pointBackgroundColor:"#1B2B3B",
-            pointRadius:5, tension:0.4, fill:true, yAxisID:"y"
+            backgroundColor:"#1B2B3B",
+            borderRadius:5, borderSkipped:false,
+            yAxisID:"y"
           },
           {
-            type:"line", label:"Utilization (%)",
+            type:"bar", label:"Utilization (%)",
             data: departments.map(d => d.utilisation_pct),
-            borderColor:"#27AE60", backgroundColor:"rgba(39,174,96,.08)",
-            borderWidth:2.5, pointBackgroundColor:"#27AE60",
-            pointRadius:5, tension:0.4, fill:false, yAxisID:"y2"
+            backgroundColor:"#27AE60",
+            borderRadius:5, borderSkipped:false,
+            yAxisID:"y2"
           }
         ]
       },

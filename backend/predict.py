@@ -25,7 +25,7 @@ import joblib
 
 # CONFIG — change these paths to match your project
 
-DEFAULT_EXCEL = "IKB_overview_export_synthetic.xlsx"
+DEFAULT_EXCEL = "IKB_overview_export_.xlsx"
 DEFAULT_MODEL = "model_random_forest.pkl"
 
 DEPARTMENTS = sorted(["CX", "ECX", "Marketing", "Recruitment", "Sales", "Support"])
