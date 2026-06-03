@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Amexio HR Dashboard — Training Budget</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    * { font-family: 'DM Sans', sans-serif; }
+    :root { --navy:#1B2B3B; --orange:#E8642A; --light-bg:#F4F6F9; --border:#E2E8EF; --muted:#6B7E8F; }
+    body { background-color:var(--light-bg); }
+
+    .time-tab { padding:.45rem 1.25rem; border-radius:8px; font-weight:600; font-size:.88rem; cursor:pointer; border:1px solid var(--border); background:white; color:var(--navy); transition:all .15s; }
+    .time-tab.active { background:var(--orange); color:white; border-color:var(--orange); }
+
+    .kpi-card { background:white; border-radius:12px; padding:1.25rem 1.5rem; border:1px solid var(--border); box-shadow:0 1px 3px rgba(0,0,0,.06); animation:fadeUp .4s ease both; }
+    .card { background:white; border-radius:12px; border:1px solid var(--border); box-shadow:0 1px 3px rgba(0,0,0,.06); overflow:hidden; animation:fadeUp .5s ease both; }
+    .card-header { padding:1.1rem 1.5rem; border-bottom:1px solid var(--border); font-weight:600; font-size:.95rem; color:var(--navy); }
+
+    table { width:100%; border-collapse:collapse; }
+    thead th { background:var(--navy); color:white; padding:.8rem 1.25rem; text-align:left; font-size:.82rem; font-weight:600; }
+    tbody tr { border-bottom:1px solid var(--border); transition:background .1s; }
+    tbody tr:hover { background:#F7F9FB; }
+    tbody td { padding:.85rem 1.25rem; font-size:.88rem; color:var(--navy); }
+    .spent-val { color:var(--orange); font-weight:600; }
+    .util-badge { background:#EEF1F4; color:var(--navy); border-radius:20px; padding:.2rem .7rem; font-weight:600; font-size:.8rem; display:inline-block; }
+
+    .ai-card { background:var(--navy); border-radius:12px; padding:1.5rem; }
+    .summary-tab { padding:.4rem 1.1rem; border-radius:6px; font-size:.85rem; font-weight:600; cursor:pointer; color:#AABDCC; border:none; border-bottom:2px solid transparent; background:transparent; transition:all .15s; }
+    .summary-tab.active { color:var(--orange); border-bottom:2px solid var(--orange); }
+    .summary-panel { display:none; }
+    .summary-panel.active { display:block; }
+    .gen-btn { background:var(--orange); color:white; border:none; border-radius:8px; padding:.6rem 1.4rem; font-weight:600; font-size:.88rem; cursor:pointer; transition:opacity .15s; margin-top:1rem; }
+    .gen-btn:hover { opacity:.88; }
+    .loading-spinner { display:inline-block; width:14px; height:14px; border:2px solid rgba(255,255,255,.3); border-top-color:white; border-radius:50%; animation:spin .7s linear infinite; margin-right:.4rem; vertical-align:middle; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+
+    @keyframes fadeUp { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+    .kpi-card:nth-child(1){animation-delay:.05s} .kpi-card:nth-child(2){animation-delay:.1s} .kpi-card:nth-child(3){animation-delay:.15s} .kpi-card:nth-child(4){animation-delay:.2s}
+  </style>
+</head>
+<body>
+<div style="display:flex;min-height:100vh;">
+
+  <!-- MAIN -->
+  <main style="flex:1;padding:2rem 2.5rem;overflow-y:auto;max-width:1200px;margin:0 auto;">
+
+    <a href="#" style="color:var(--muted);font-size:.85rem;text-decoration:none;display:inline-flex;align-items:center;gap:.3rem;margin-bottom:1rem;">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>Back to Dashboard
+    </a>
+
+    <h1 style="font-size:1.75rem;font-weight:700;color:var(--navy);margin:0 0 .25rem;">Training Budget Overview</h1>
+    <p style="color:var(--muted);font-size:.9rem;margin:0 0 1.5rem;">Department training budget allocation and spending</p>
+
+    <!-- Time tabs -->
+    <div style="display:flex;gap:.5rem;margin-bottom:1.75rem;">
+      <button class="time-tab active" onclick="setTimePeriod(this,'monthly')">Monthly</button>
+      <button class="time-tab" onclick="setTimePeriod(this,'quarterly')">Quarterly</button>
+      <button class="time-tab" onclick="setTimePeriod(this,'yearly')">Yearly</button>
+    </div>
+
+    <!--
+      ═══════════════════════════════════════════════════════════════════
+      KPI CARDS
+      CHANGED: removed hardcoded values, added id attributes so
+      loadData() can inject real values from GET /data
+      ═══════════════════════════════════════════════════════════════════
+    -->
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.75rem;">
+      <div class="kpi-card">
+        <div style="font-size:.78rem;color:var(--muted);font-weight:500;margin-bottom:.3rem;">Total Budget</div>
+        <div style="font-size:1.65rem;font-weight:700;color:var(--navy);" id="kpi-total-budget">Loading...</div>
+        <div style="font-size:.78rem;color:var(--muted);margin-top:.2rem;">allocated this period</div>
+      </div>
+      <div class="kpi-card">
+        <div style="font-size:.78rem;color:var(--muted);font-weight:500;margin-bottom:.3rem;">Total Spent</div>
+        <div style="font-size:1.65rem;font-weight:700;color:var(--navy);" id="kpi-total-spent">Loading...</div>
+        <div style="font-size:.78rem;color:#27AE60;font-weight:600;margin-top:.2rem;" id="kpi-spent-change">—</div>
+      </div>
+      <div class="kpi-card">
+        <div style="font-size:.78rem;color:var(--muted);font-weight:500;margin-bottom:.3rem;">Remaining</div>
+        <div style="font-size:1.65rem;font-weight:700;color:var(--navy);" id="kpi-remaining">Loading...</div>
+        <div style="font-size:.78rem;color:var(--muted);margin-top:.2rem;">left to spend</div>
+      </div>
+      <div class="kpi-card">
+        <div style="font-size:.78rem;color:var(--muted);font-weight:500;margin-bottom:.3rem;">Utilisation</div>
+        <div style="font-size:1.65rem;font-weight:700;color:var(--navy);" id="kpi-utilisation">Loading...</div>
+        <div style="font-size:.78rem;color:#27AE60;font-weight:600;margin-top:.2rem;" id="kpi-util-change">—</div>
+      </div>
+    </div>
+
+    <!--
+      ═══════════════════════════════════════════════════════════════════
+      AI INSIGHTS — LLM INTEGRATION
+      CHANGED: moved to top (above chart and table).
+      CHANGED: Generate Insights button now calls POST /summary via
+      the generateSummary() function and injects the real Mistral
+      response into panel-brief and panel-standard.
+      The placeholder text is replaced by real LLM output on click.
+      ═══════════════════════════════════════════════════════════════════
+    -->
+    <div class="ai-card" style="margin-bottom:1.75rem;">
+      <div style="color:white;font-weight:700;font-size:1rem;margin-bottom:1rem;display:flex;align-items:center;gap:.5rem;">
+        <svg width="18" height="18" fill="none" stroke="#E8642A" stroke-width="2" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        AI Insights — Training Budget Analysis
+      </div>
+      <div style="display:flex;gap:0;border-bottom:1px solid rgba(255,255,255,.1);margin-bottom:1rem;">
+        <button class="summary-tab active" onclick="switchTab(this,'brief')">Brief Summary</button>
+        <button class="summary-tab" onclick="switchTab(this,'standard')">Standard Summary</button>
+      </div>
+
+      <!-- Brief summary panel — content replaced by real LLM output on Generate click -->
+      <div class="summary-panel active" id="panel-brief">
+        <p style="color:#FFFFFF;font-size:.9rem;line-height:1.75;">
+          Click "Generate Insights" to generate a real AI summary using the local Mistral model.
+        </p>
+      </div>
+
+      <!-- Standard summary panel — content replaced by real LLM output on Generate click -->
+      <div class="summary-panel" id="panel-standard">
+        <p style="color:#FFFFFF;font-size:.9rem;line-height:1.75;">
+          Click "Generate Insights" to generate a real AI summary using the local Mistral model.
+        </p>
+      </div>
+
+      <!-- CHANGED: button now calls real POST /summary endpoint via generateSummary() -->
+      <button class="gen-btn" onclick="generateSummary()">Generate Insights</button>
+    </div>
+
+    <!-- Chart card — populated by buildChart() with real data from GET /data -->
+    <div class="card" style="margin-bottom:1.5rem;">
+      <div class="card-header">Budget Utilization by Department</div>
+      <div style="padding:1.25rem;">
+        <canvas id="budgetChart" height="90"></canvas>
+      </div>
+    </div>
+
+    <!-- Department table — populated by buildTable() with real data from GET /data -->
+    <div class="card" style="margin-bottom:1.5rem;">
+      <div class="card-header">Department Breakdown</div>
+      <table>
+        <thead>
+          <tr>
+            <th>Department</th><th>Total Budget</th>
+            <th>Spent</th><th>Remaining</th><th>Utilization</th>
+          </tr>
+        </thead>
+        <tbody id="table-body">
+          <tr><td colspan="5" style="text-align:center;color:var(--muted);padding:1.5rem;">Loading data...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!--
+      ML FORECAST — moved to bottom
+      These values are still hardcoded placeholders.
+      REPLACE: connect to GET /forecast once predict.py is integrated into main.py
+    -->
+    <div style="margin-bottom:1.5rem;">
+      <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.85rem;">
+        <svg width="16" height="16" fill="none" stroke="#E8642A" stroke-width="2" viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+        <span style="font-weight:700;font-size:.95rem;color:var(--navy);">ML Forecast — Next Month</span>
+        <span style="font-size:.75rem;color:var(--muted);background:#EEF1F4;padding:.15rem .6rem;border-radius:20px;font-weight:500;">Predicted</span>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;">
+        <!-- REPLACE: inject forecast.kpi.predicted_spend from GET /forecast -->
+        <div class="kpi-card" style="border-left:3px solid #E8642A;">
+          <div style="font-size:.75rem;color:var(--muted);font-weight:500;margin-bottom:.3rem;">Predicted Spend</div>
+          <div style="font-size:1.45rem;font-weight:700;color:var(--navy);" id="fc-spend">—</div>
+          <div style="font-size:.75rem;color:#E8642A;font-weight:600;margin-top:.2rem;" id="fc-spend-change">—</div>
+        </div>
+        <!-- REPLACE: inject forecast.kpi.predicted_utilisation from GET /forecast -->
+        <div class="kpi-card" style="border-left:3px solid #E8642A;">
+          <div style="font-size:.75rem;color:var(--muted);font-weight:500;margin-bottom:.3rem;">Predicted Utilisation</div>
+          <div style="font-size:1.45rem;font-weight:700;color:var(--navy);" id="fc-util">—</div>
+          <div style="font-size:.75rem;color:#E8642A;font-weight:600;margin-top:.2rem;" id="fc-util-change">—</div>
+        </div>
+        <!-- REPLACE: inject forecast.kpi.predicted_remaining from GET /forecast -->
+        <div class="kpi-card" style="border-left:3px solid #27AE60;">
+          <div style="font-size:.75rem;color:var(--muted);font-weight:500;margin-bottom:.3rem;">Predicted Remaining</div>
+          <div style="font-size:1.45rem;font-weight:700;color:var(--navy);" id="fc-remaining">—</div>
+          <div style="font-size:.75rem;color:#E74C3C;font-weight:600;margin-top:.2rem;" id="fc-remaining-change">—</div>
+        </div>
+        <!-- REPLACE: inject forecast.kpi.highest_spender from GET /forecast -->
+        <div class="kpi-card" style="border-left:3px solid #27AE60;">
+          <div style="font-size:.75rem;color:var(--muted);font-weight:500;margin-bottom:.3rem;">Highest Predicted Spender</div>
+          <div style="font-size:1.45rem;font-weight:700;color:var(--navy);" id="fc-highest">—</div>
+          <div style="font-size:.75rem;color:var(--muted);font-weight:500;margin-top:.2rem;" id="fc-highest-amount">—</div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+  // ═══════════════════════════════════════════════════════════════════════
+  // API URL — backend must be running via: uvicorn main:app --reload
+  // CHANGE this if your backend runs on a different port
+  // ═══════════════════════════════════════════════════════════════════════
+  const API_URL = "http://127.0.0.1:8000";
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // CHANGED: loadData() — fetches real data from GET /data
+  // Replaces all hardcoded KPI values, table rows and chart data
+  // Previously: all values were hardcoded in the HTML and JS arrays
+  // Now: values come from the FastAPI backend via data.py
+  // ═══════════════════════════════════════════════════════════════════════
+  async function loadData() {
+    try {
+      const res = await fetch(`${API_URL}/data`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+
+      // Inject KPI values into the card elements
+      document.getElementById("kpi-total-budget").textContent = "€" + data.total_budget.toLocaleString("nl-NL", { maximumFractionDigits: 0 });
+      document.getElementById("kpi-total-spent").textContent  = "€" + data.total_spent.toLocaleString("nl-NL", { maximumFractionDigits: 0 });
+      document.getElementById("kpi-remaining").textContent    = "€" + data.total_remaining.toLocaleString("nl-NL", { maximumFractionDigits: 0 });
+      document.getElementById("kpi-utilisation").textContent  = data.utilisation_pct + "%";
+
+      // Build table and chart with real department data
+      buildTable(data.by_department);
+      buildChart(data.by_department);
+
+    } catch(e) {
+      console.error("Could not load data from backend:", e);
+      document.getElementById("table-body").innerHTML =
+        `<tr><td colspan="5" style="text-align:center;color:#E74C3C;padding:1.5rem;">
+          Could not reach backend at ${API_URL}. Make sure uvicorn is running.
+        </td></tr>`;
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // CHANGED: buildTable() — builds table rows from real department data
+  // Previously: rows were hardcoded with employee names
+  // Now: rows are generated dynamically from by_department array from /data
+  // ═══════════════════════════════════════════════════════════════════════
+  function buildTable(departments) {
+    const tbody = document.getElementById("table-body");
+    tbody.innerHTML = "";
+    departments.forEach(d => {
+      tbody.innerHTML += `<tr>
+        <td style="font-weight:600">${d.name}</td>
+        <td>€${d.budget.toLocaleString("nl-NL", { maximumFractionDigits: 0 })}</td>
+        <td class="spent-val">€${d.spent.toLocaleString("nl-NL", { maximumFractionDigits: 0 })}</td>
+        <td>€${d.remaining.toLocaleString("nl-NL", { maximumFractionDigits: 0 })}</td>
+        <td><span class="util-badge">${d.utilisation_pct}%</span></td>
+      </tr>`;
+    });
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // CHANGED: buildChart() — builds Chart.js graph from real department data
+  // Previously: chart used hardcoded departmentData array
+  // Now: chart is built dynamically from by_department array from /data
+  // Destroys previous chart instance before rebuilding to avoid duplicates
+  // ═══════════════════════════════════════════════════════════════════════
+  function buildChart(departments) {
+    const ctx = document.getElementById("budgetChart").getContext("2d");
+
+    // Destroy existing chart instance if it exists (prevents duplicates on reload)
+    if (window.budgetChartInstance) {
+      window.budgetChartInstance.destroy();
+    }
+
+    window.budgetChartInstance = new Chart(ctx, {
+      data: {
+        labels: departments.map(d => d.name),
+        datasets: [
+          {
+            type:"bar", label:"Spent (€)",
+            data: departments.map(d => d.spent),
+            backgroundColor:"#E8642A",
+            borderRadius:5, borderSkipped:false,
+            yAxisID:"y"
+          },
+          {
+            type:"bar", label:"Remaining (€)",
+            data: departments.map(d => d.remaining),
+            backgroundColor:"#1B2B3B",
+            borderRadius:5, borderSkipped:false,
+            yAxisID:"y"
+          },
+          {
+            type:"bar", label:"Utilization (%)",
+            data: departments.map(d => d.utilisation_pct),
+            backgroundColor:"#27AE60",
+            borderRadius:5, borderSkipped:false,
+            yAxisID:"y2"
+          }
+        ]
+      },
+      options: {
+        responsive:true,
+        interaction:{ mode:"index", intersect:false },
+        plugins:{
+          legend:{ position:"bottom", labels:{ font:{family:"DM Sans",size:12}, padding:20, usePointStyle:true } },
+          tooltip:{ backgroundColor:"#1B2B3B", titleFont:{family:"DM Sans",weight:"600"}, bodyFont:{family:"DM Sans"}, padding:12, cornerRadius:8 }
+        },
+        scales:{
+          x:{ grid:{display:false}, ticks:{font:{family:"DM Sans",size:11}} },
+          y:{ position:"left", grid:{color:"#EEF1F4"}, ticks:{font:{family:"DM Sans",size:11}, callback:v=>"€"+v} },
+          y2:{ position:"right", grid:{drawOnChartArea:false}, min:0, max:100, ticks:{font:{family:"DM Sans",size:11}, callback:v=>v+"%"} }
+        }
+      }
+    });
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // CHANGED: generateSummary() — calls real POST /summary endpoint
+  // Previously: button showed a placeholder alert
+  // Now: sends POST request to /summary, Mistral (via llm.py + ollama)
+  // generates a real Brief and Standard summary based on live data,
+  // and injects the response text into panel-brief and panel-standard
+  // ═══════════════════════════════════════════════════════════════════════
+  async function generateSummary() {
+    const btn = document.querySelector(".gen-btn");
+    btn.innerHTML = '<span class="loading-spinner"></span> Generating...';
+    btn.disabled = true;
+
+    try {
+      const res = await fetch(`${API_URL}/summary`, { method: "POST" });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const result = await res.json();
+
+      // Inject real LLM-generated summaries into the panels
+      document.getElementById("panel-brief").querySelector("p").textContent    = result.brief;
+      document.getElementById("panel-standard").querySelector("p").textContent = result.standard;
+
+    } catch(e) {
+      console.error("LLM request failed:", e);
+      document.getElementById("panel-brief").querySelector("p").textContent =
+        "Could not generate summary. Make sure uvicorn is running and Ollama has the mistral model pulled.";
+    } finally {
+      btn.innerHTML = "Generate Insights";
+      btn.disabled = false;
+    }
+  }
+
+  // Time period switcher
+  // REPLACE: fetch new data from GET /data?period=monthly|quarterly|yearly once backend supports it
+  function setTimePeriod(btn, period) {
+    document.querySelectorAll(".time-tab").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    console.log("TODO: fetch data for period:", period);
+  }
+
+  // Summary tab switcher
+  function switchTab(btn, tab) {
+    document.querySelectorAll(".summary-tab").forEach(b => b.classList.remove("active"));
+    document.querySelectorAll(".summary-panel").forEach(p => p.classList.remove("active"));
+    btn.classList.add("active");
+    document.getElementById("panel-"+tab).classList.add("active");
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // CHANGED: loadForecast() — fetches real ML predictions from GET /forecast
+  // Previously: forecast cards showed hardcoded — placeholders
+  // Now: values come from predict.py via the FastAPI backend
+  // ═══════════════════════════════════════════════════════════════════════
+  async function loadForecast() {
+    try {
+      const res = await fetch(`${API_URL}/forecast`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      const kpi = data.kpi;
+
+      // Predicted Spend
+      document.getElementById("fc-spend").textContent =
+        "€" + kpi.predicted_spend.toLocaleString("nl-NL", { maximumFractionDigits: 0 });
+      document.getElementById("fc-spend-change").textContent =
+        (kpi.predicted_spend_change_pct >= 0 ? "↑ +" : "↓ ") + kpi.predicted_spend_change_pct + "% vs this month";
+
+      // Predicted Utilisation
+      document.getElementById("fc-util").textContent = kpi.predicted_utilisation + "%";
+      document.getElementById("fc-util-change").textContent =
+        (kpi.predicted_utilisation_change_pct >= 0 ? "↑ +" : "↓ ") + kpi.predicted_utilisation_change_pct + "% vs this month";
+
+      // Predicted Remaining
+      document.getElementById("fc-remaining").textContent =
+        "€" + kpi.predicted_remaining.toLocaleString("nl-NL", { maximumFractionDigits: 0 });
+      document.getElementById("fc-remaining-change").textContent =
+        (kpi.predicted_remaining_change_pct >= 0 ? "↑ +" : "↓ ") + kpi.predicted_remaining_change_pct + "% vs this month";
+
+      // Highest Predicted Spender
+      document.getElementById("fc-highest").textContent = kpi.highest_spender;
+      document.getElementById("fc-highest-amount").textContent =
+        "est. €" + kpi.highest_spender_amount.toLocaleString("nl-NL", { maximumFractionDigits: 0 }) + " next month";
+
+    } catch(e) {
+      console.error("Could not load forecast:", e);
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // CHANGED: loadData() and loadForecast() are called on page load
+  // Previously: data was hardcoded and always visible
+  // Now: page fetches live data from GET /data and GET /forecast when it opens
+  // ═══════════════════════════════════════════════════════════════════════
+  loadData();
+  loadForecast();
+</script>
+</body>
+</html>
