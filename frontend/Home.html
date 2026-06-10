@@ -92,9 +92,26 @@
 
     .dashboard-grid {
       display: grid;
-      grid-template-columns: minmax(0, 1fr);
+      grid-template-columns: minmax(0, 1.9fr) minmax(320px, 1fr);
+      gap: 1.15rem 1.35rem;
+      max-width: 1500px;
+      align-items: start;
+    }
+
+    .dashboard-main,
+    .dashboard-side {
+      display: flex;
+      flex-direction: column;
       gap: 1.15rem;
-      max-width: 1100px;
+      min-width: 0;
+    }
+
+    .dashboard-main {
+      grid-column: 1;
+    }
+
+    .dashboard-side {
+      grid-column: 2;
     }
 
     .metric-card {
@@ -184,6 +201,138 @@
     .metric-budget::before { background: #2F6BFF; }
     .metric-employees::before { background: #00B13A; }
 
+    .panel-card {
+      background: #fff;
+      border: 1px solid rgba(212, 219, 229, 0.9);
+      border-radius: 18px;
+      box-shadow: 0 2px 4px rgba(16, 24, 40, 0.04), 0 12px 30px rgba(16, 24, 40, 0.05);
+      overflow: hidden;
+    }
+
+    .panel-header {
+      padding: 1.15rem 1.25rem 0.85rem;
+      font-size: 1rem;
+      font-weight: 500;
+      color: #50607A;
+    }
+
+    .time-tabs {
+      display: flex;
+      flex-direction: column;
+      gap: 0.55rem;
+      padding: 0 1.25rem 1.25rem;
+    }
+
+    .time-tab {
+      padding: 0.7rem 1rem;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: #EEF2F7;
+      color: #50607A;
+      font-family: inherit;
+      transition: all 0.15s;
+      text-align: center;
+    }
+
+    .time-tab.active {
+      background: var(--orange);
+      color: white;
+      border-color: var(--orange);
+    }
+
+    .time-tab:not(.active):hover {
+      background: #E4EAF2;
+    }
+
+    .ai-card {
+      background: linear-gradient(180deg, #163B53 0%, #163E58 100%);
+      border-radius: 18px;
+      overflow: hidden;
+      box-shadow: 0 2px 4px rgba(16, 24, 40, 0.04), 0 12px 30px rgba(16, 24, 40, 0.12);
+      min-height: 260px;
+    }
+
+    .ai-title {
+      color: white;
+      font-weight: 700;
+      font-size: 1.25rem;
+      padding: 1.3rem 1.25rem 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .ai-tabs {
+      display: flex;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      margin: 0 0 1rem;
+    }
+
+    .sum-tab {
+      flex: 1;
+      padding: 0.95rem 1rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      color: rgba(255,255,255,0.45);
+      border: none;
+      border-bottom: 2px solid transparent;
+      background: transparent;
+      font-family: inherit;
+      transition: all 0.15s;
+    }
+
+    .sum-tab.active {
+      color: #00D9FF;
+      border-bottom: 2px solid #00D9FF;
+    }
+
+    .sum-panel {
+      display: none;
+      padding: 0 1.25rem 1.25rem;
+    }
+
+    .sum-panel.active { display: block; }
+
+    .sum-text {
+      color: white;
+      font-size: 1rem;
+      line-height: 1.7;
+      opacity: 0.95;
+    }
+
+    .gen-btn {
+      background: var(--orange);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 0.6rem 1.4rem;
+      font-weight: 600;
+      font-size: 0.88rem;
+      cursor: pointer;
+      margin: 0 1.25rem 1.25rem;
+      font-family: inherit;
+      transition: background 0.15s;
+    }
+
+    .gen-btn:hover { background: var(--orange-h); }
+    .gen-btn:disabled { opacity: 0.7; cursor: not-allowed; }
+
+    .spinner {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      margin-right: 0.4rem;
+      vertical-align: middle;
+    }
+
     .loading-state, .error-state {
       margin-top: 1rem;
       padding: 0.95rem 1rem;
@@ -195,10 +344,14 @@
 
     @media (max-width: 900px) {
       .main-content { padding: 1.25rem 1rem 1.5rem; }
-      .dashboard-grid { max-width: none; }
+      .dashboard-grid { max-width: none; grid-template-columns: 1fr; }
       .metric-card { padding: 1.15rem 1rem; }
       .metric-head { flex-direction: column; }
+      .dashboard-main,
+      .dashboard-side { grid-column: auto; }
     }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
   </style>
 </head>
 <body data-page="home">
@@ -240,71 +393,104 @@
     <div id="loading" class="loading-state">Loading dashboard metrics...</div>
 
     <section id="dashboard" class="dashboard-grid" hidden>
-      <article class="metric-card metric-sick">
-        <div class="metric-head">
-          <div class="metric-icon icon-sick">
-            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M3 12h3l2-7 4 14 2-7h7" />
-            </svg>
-          </div>
-          <div>
-            <div class="metric-label">Sick Leave</div>
-            <div class="metric-value" id="absent-count">-</div>
-            <div class="metric-copy">employees currently absent</div>
-          </div>
-        </div>
-        <div class="metric-foot">
-          <span>Current absent</span>
-          <strong id="absent-desc">-</strong>
-        </div>
-      </article>
-
-      <article class="metric-card metric-budget">
-        <div class="metric-head">
-          <div class="metric-icon icon-budget">
-            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M3 10l9-5 9 5-9 5-9-5z" />
-              <path d="M7 12v5c0 1.7 3 3 5 3s5-1.3 5-3v-5" />
-            </svg>
-          </div>
-          <div>
-            <div class="metric-label">Training Budget</div>
-            <div class="metric-value" id="budget-pct">-</div>
-            <div class="metric-copy" id="budget-summary">-</div>
-          </div>
-        </div>
-        <div>
-          <div class="metric-foot">
-            <span>Total amount</span>
-            <strong id="budget-total">-</strong>
+      <div class="dashboard-main">
+        <article class="metric-card metric-sick">
+          <div class="metric-head">
+            <div class="metric-icon icon-sick">
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 12h3l2-7 4 14 2-7h7" />
+              </svg>
+            </div>
+            <div>
+              <div class="metric-label">Sick Leave</div>
+              <div class="metric-value" id="absent-count">-</div>
+              <div class="metric-copy">employees currently absent</div>
+            </div>
           </div>
           <div class="metric-foot">
-            <span>Used amount</span>
-            <strong id="budget-used">-</strong>
+            <span>Current absent</span>
+            <strong id="absent-desc">-</strong>
           </div>
-        </div>
-      </article>
+        </article>
 
-      <article class="metric-card metric-employees">
-        <div class="metric-head">
-          <div class="metric-icon icon-employees">
-            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2" />
-              <circle cx="9" cy="7" r="4" />
-              <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-            </svg>
+        <article class="metric-card metric-budget">
+          <div class="metric-head">
+            <div class="metric-icon icon-budget">
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 10l9-5 9 5-9 5-9-5z" />
+                <path d="M7 12v5c0 1.7 3 3 5 3s5-1.3 5-3v-5" />
+              </svg>
+            </div>
+            <div>
+              <div class="metric-label">Training Budget</div>
+              <div class="metric-value" id="budget-pct">-</div>
+              <div class="metric-copy" id="budget-summary">-</div>
+            </div>
           </div>
           <div>
-            <div class="metric-label">Employees</div>
-            <div class="metric-value" id="active-count">-</div>
-            <div class="metric-copy">active employees</div>
+            <div class="metric-foot">
+              <span>Total amount</span>
+              <strong id="budget-total">-</strong>
+            </div>
+            <div class="metric-foot">
+              <span>Used amount</span>
+              <strong id="budget-used">-</strong>
+            </div>
+          </div>
+        </article>
+
+        <article class="metric-card metric-employees">
+          <div class="metric-head">
+            <div class="metric-icon icon-employees">
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2" />
+                <circle cx="9" cy="7" r="4" />
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+              </svg>
+            </div>
+            <div>
+              <div class="metric-label">Employees</div>
+              <div class="metric-value" id="active-count">-</div>
+              <div class="metric-copy">active employees</div>
+            </div>
+          </div>
+          <div class="metric-foot">
+            <span>Active headcount</span>
+            <strong id="active-desc">-</strong>
+          </div>
+        </article>
+      </div>
+
+      <div class="dashboard-side">
+        <div class="panel-card">
+          <div class="panel-header">Time Period</div>
+          <div class="time-tabs">
+            <button class="time-tab active" type="button" onclick="setTimePeriod(this,'monthly')">Monthly</button>
+            <button class="time-tab" type="button" onclick="setTimePeriod(this,'quarterly')">Quarterly</button>
+            <button class="time-tab" type="button" onclick="setTimePeriod(this,'yearly')">Yearly</button>
           </div>
         </div>
-        <div class="metric-foot">
-          <span>Active headcount</span>
-          <strong id="active-desc">-</strong>
+
+        <div class="ai-card">
+          <div class="ai-title">
+            <svg width="18" height="18" fill="none" stroke="#00D9FF" stroke-width="2" viewBox="0 0 24 24">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+            </svg>
+            AI Summary
+          </div>
+          <div class="ai-tabs">
+            <button class="sum-tab active" type="button" onclick="switchTab(this,'brief')">Brief Summary</button>
+            <button class="sum-tab" type="button" onclick="switchTab(this,'standard')">Standard Summary</button>
+          </div>
+          <div class="sum-panel active" id="panel-brief">
+            <p class="sum-text">AI summary content will appear here.</p>
+          </div>
+          <div class="sum-panel" id="panel-standard">
+            <p class="sum-text">AI summary content will appear here.</p>
+          </div>
+          <button class="gen-btn" type="button" onclick="generateSummary()">Generate Insights</button>
         </div>
-      </article>
+      </div>
     </section>
 
     <div id="error" class="error-state" hidden></div>
@@ -325,6 +511,69 @@
       const element = document.getElementById(id);
       if (element) {
         element.textContent = value;
+      }
+    }
+
+    function setTimePeriod(btn, period) {
+      document.querySelectorAll(".time-tab").forEach((tab) => tab.classList.remove("active"));
+      btn.classList.add("active");
+    }
+
+    function switchTab(btn, tab) {
+      document.querySelectorAll(".sum-tab").forEach((summaryTab) => summaryTab.classList.remove("active"));
+      document.querySelectorAll(".sum-panel").forEach((panel) => panel.classList.remove("active"));
+      btn.classList.add("active");
+      const panel = document.getElementById(`panel-${tab}`);
+      if (panel) {
+        panel.classList.add("active");
+      }
+    }
+
+    async function generateSummary() {
+      const btn = document.querySelector(".gen-btn");
+      if (!btn) {
+        return;
+      }
+
+      btn.innerHTML = '<span class="spinner"></span> Generating...';
+      btn.disabled = true;
+
+      try {
+        const res = await fetch(`${API_URL}/summary`, { method: "POST" });
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}`);
+        }
+
+        const result = await res.json();
+
+        const briefPanel = document.getElementById("panel-brief");
+        if (briefPanel) {
+          const briefParagraph = briefPanel.querySelector("p");
+          if (briefParagraph) {
+            briefParagraph.textContent = result.brief;
+          }
+        }
+
+        const standardPanel = document.getElementById("panel-standard");
+        if (standardPanel) {
+          const standardParagraph = standardPanel.querySelector("p");
+          if (standardParagraph) {
+            standardParagraph.textContent = result.standard;
+          }
+        }
+      } catch (error) {
+        const briefPanel = document.getElementById("panel-brief");
+        if (briefPanel) {
+          const briefParagraph = briefPanel.querySelector("p");
+          if (briefParagraph) {
+            briefParagraph.textContent = "Could not generate summary. Make sure uvicorn is running and Ollama has the model pulled.";
+          }
+        }
+
+        console.error("Summary error:", error);
+      } finally {
+        btn.innerHTML = "Generate Insights";
+        btn.disabled = false;
       }
     }
 
