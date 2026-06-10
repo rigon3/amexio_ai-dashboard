@@ -45,7 +45,7 @@ def summary():
 def get_forecast():
     try:
         result = forecast(
-           excel_path=str(DATA_DIR / "IKB_overview_export.xlsx"),
+           excel_path=str(DATA_DIR / "IKB_overview_export_synthetic.xlsx"),
             model_path=str(MODEL_PATH)
         )
         return result

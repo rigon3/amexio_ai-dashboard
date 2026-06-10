@@ -5,8 +5,8 @@ DATA_DIR = Path(__file__).parent / "data"
 
 
 def aggregate_training_budget() -> dict:
-    opl = pd.read_excel(DATA_DIR / "opleiding_export.xlsx")
-    med = pd.read_excel(DATA_DIR / "medewerkers_overzicht.xlsx")
+    opl = pd.read_excel(DATA_DIR / "opleiding_export_synthetic.xlsx")
+    med = pd.read_excel(DATA_DIR / "medewerkers_overzicht_synthetic.xlsx")
 
     # Keep only what we need from medewerkers before joining
     med = med[["Odoo/SAP ID", "Afdeling"]]
