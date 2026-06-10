@@ -1,0 +1,70 @@
+<!--
+  nav.html — Reusable Amexio sidebar navigation
+  Usage: inject via loadNav() into #nav-container on any page
+  Active item: set data-page="home|employees|sick-leave|training-budget" on <body>
+-->
+<aside id="sidebar">
+
+  <div class="logo-area">
+    <!-- REPLACE: src with real Amexio logo path -->
+    <div style="color:white;font-weight:700;font-size:1.1rem;letter-spacing:0.5px;">
+        <img src="Photo/AmexioPhoto.png" alt="Amexio" style="height:40px;width:100%;object-fit:contain;"/>
+  </div>
+
+  <nav>
+    <a href="home.html" class="nav-item" data-nav="home">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+        <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
+      </svg>
+      Home
+    </a>
+
+    <a href="employees.html" class="nav-item" data-nav="employees">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+        <circle cx="9" cy="7" r="4"/>
+        <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
+      </svg>
+      Employees
+    </a>
+
+    <a href="SickLeave.html" class="nav-item" data-nav="sick-leave">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+      </svg>
+      Sick Leave
+    </a>
+
+    <a href="training_budget.html" class="nav-item" data-nav="training-budget">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
+        <path d="M6 12v5c3 3 9 3 12 0v-5"/>
+      </svg>
+      Training Budget
+    </a>
+  </nav>
+
+  <div class="upload-area">
+    <button class="upload-btn" onclick="alert('TODO: connect to backend upload endpoint')">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+        <polyline points="16 16 12 12 8 16"/>
+        <line x1="12" y1="12" x2="12" y2="21"/>
+        <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/>
+      </svg>
+      Upload Data
+    </button>
+  </div>
+
+</aside>
+
+<script>
+  (function() {
+    const activePage = document.body.getAttribute('data-page') || '';
+    document.querySelectorAll('.nav-item').forEach(item => {
+      if (item.getAttribute('data-nav') === activePage) {
+        item.classList.add('active');
+      }
+    });
+  })();
+</script>

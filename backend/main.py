@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pathlib import Path
 import sys
 import os
+import pandas as pd
 
 from data import aggregate_training_budget
 from llm import generate_summary
@@ -25,6 +26,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+
+@app.get("/employees")
+def get_employees():
+    import pandas as pd
+    df = pd.read_excel(DATA_DIR / "medewerkers_overzicht.xlsx")
+    df["Naam"] = (df["Voornaam"].fillna("") + " " + df["Tussenvoegsel"].fillna("") + " " + df["Achternaam"].fillna("")).str.strip().str.replace("  ", " ")
+    df["status"] = df["Actief"].apply(lambda x: "Active" if x else "Inactive")
+    df["Indienstdatum"] = pd.to_datetime(df["Indienstdatum"]).dt.strftime("%d-%m-%Y")
+    return df.rename(columns={"Naam":"name","Afdeling":"department","Fulltime / parttime (%)":"contract","Indienstdatum":"start_date","Woonplaats":"city"})[["name","department","contract","start_date","city","status"]].to_dict(orient="records")
 
 @app.get("/data")
 def data():
@@ -51,3 +62,5 @@ def get_forecast():
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Forecast error: {e}")
+    
+    

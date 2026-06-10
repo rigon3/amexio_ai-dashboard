@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Amexio HR Dashboard — Employees</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; font-family: 'DM Sans', sans-serif; }
+    body { background: #F8F9FA; color: #1A1F36; display: flex; min-height: 100vh; }
+
+    :root {
+      --navy:      #1B4965;
+      --orange:    #FF6B35;
+      --orange-h:  #FF7A45;
+      --navy-acc:  #2C5F7A;
+      --bg:        #F8F9FA;
+      --card:      #ffffff;
+      --bg2:       #F0F2F5;
+      --border:    #E0E4E8;
+      --txt:       #1A1F36;
+      --txt2:      #5F6B7A;
+      --green:     #62C370;
+      --red:       #DC3545;
+      --cyan:      #00D9FF;
+      --sidebar-w: 240px;
+    }
+
+    /* ── Sidebar ── */
+    #sidebar {
+      position: fixed; top: 0; left: 0; bottom: 0;
+      width: var(--sidebar-w); background: var(--navy);
+      display: flex; flex-direction: column; z-index: 100;
+    }
+    .sidebar-logo {
+      padding: 1.5rem 1.25rem;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      color: white; font-weight: 700; font-size: 1rem;
+    }
+    .sidebar-logo span { color: var(--orange); }
+    .sidebar-nav {
+      flex: 1; padding: 1rem 0.75rem;
+      display: flex; flex-direction: column; gap: 0.2rem;
+    }
+    .nav-item {
+      display: flex; align-items: center; gap: 0.75rem;
+      padding: 0.7rem 1rem; border-radius: 8px;
+      color: rgba(255,255,255,0.65); text-decoration: none;
+      font-size: 0.9rem; font-weight: 500; transition: all 0.15s;
+    }
+    .nav-item svg { width: 18px; height: 18px; flex-shrink: 0; }
+    .nav-item:hover { background: var(--navy-acc); color: white; }
+    .nav-item.active { background: var(--orange); color: white; }
+    .sidebar-bottom { padding: 1rem 0.75rem 1.5rem; }
+    .upload-btn {
+      width: 100%; background: var(--orange); color: white; border: none;
+      border-radius: 10px; padding: 0.75rem 1rem; font-weight: 600;
+      font-size: 0.9rem; cursor: pointer; display: flex; align-items: center;
+      justify-content: center; gap: 0.5rem; font-family: inherit; transition: background 0.15s;
+    }
+    .upload-btn:hover { background: var(--orange-h); }
+
+    /* ── Main ── */
+    .main-content { margin-left: var(--sidebar-w); flex: 1; padding: 2rem 2.5rem; overflow-y: auto; }
+    .back-link {
+      color: var(--txt2); font-size: 0.85rem; text-decoration: none;
+      display: inline-flex; align-items: center; gap: 0.3rem; margin-bottom: 1rem;
+    }
+    .back-link:hover { color: var(--txt); }
+    h1 { font-size: 1.75rem; font-weight: 700; color: var(--txt); margin-bottom: 0.25rem; }
+    .subtitle { font-size: 0.9rem; color: var(--txt2); margin-bottom: 1.5rem; }
+
+    /* ── KPI grid ── */
+    .kpi-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 1rem; margin-bottom: 1.75rem; }
+    .kpi-card {
+      background: var(--card); border-radius: 12px;
+      padding: 1.25rem 1.5rem; border: 1px solid var(--border);
+      box-shadow: 0 1px 3px rgba(0,0,0,.06);
+    }
+    .kpi-label { font-size: 0.78rem; color: var(--txt2); font-weight: 500; margin-bottom: 0.3rem; }
+    .kpi-value { font-size: 1.65rem; font-weight: 700; color: var(--txt); }
+    .kpi-value.green { color: var(--green); }
+    .kpi-value.orange { color: var(--orange); }
+
+    /* ── Charts row ── */
+    .charts-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; }
+    .card {
+      background: var(--card); border-radius: 12px;
+      border: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,.06);
+      overflow: hidden; margin-bottom: 1.5rem;
+    }
+    .card-header {
+      padding: 1.1rem 1.5rem; border-bottom: 1px solid var(--border);
+      font-weight: 600; font-size: 0.95rem; color: var(--txt);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .card-body { padding: 1.25rem; }
+
+    /* ── Search & filter bar ── */
+    .toolbar {
+      display: flex; align-items: center; gap: 0.75rem;
+      padding: 1rem 1.5rem; border-bottom: 1px solid var(--border);
+    }
+    .search-input {
+      flex: 1; padding: 0.5rem 0.75rem 0.5rem 2.25rem;
+      border: 1px solid var(--border); border-radius: 8px;
+      font-size: 0.88rem; font-family: inherit; color: var(--txt);
+      background: var(--bg); outline: none; transition: border 0.15s;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' fill='none' stroke='%235F6B7A' stroke-width='2' viewBox='0 0 24 24'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: 0.65rem center;
+    }
+    .search-input:focus { border-color: var(--navy); }
+    .filter-select {
+      padding: 0.5rem 0.75rem; border: 1px solid var(--border); border-radius: 8px;
+      font-size: 0.88rem; font-family: inherit; color: var(--txt);
+      background: var(--bg); outline: none; cursor: pointer;
+    }
+
+    /* ── Table ── */
+    table { width: 100%; border-collapse: collapse; }
+    thead th {
+      background: var(--navy); color: white; padding: 0.8rem 1.25rem;
+      text-align: left; font-size: 0.82rem; font-weight: 600;
+    }
+    tbody tr { border-bottom: 1px solid var(--border); transition: background 0.1s; }
+    tbody tr:hover { background: var(--bg); }
+    tbody td { padding: 0.85rem 1.25rem; font-size: 0.88rem; color: var(--txt); }
+
+    /* ── Status badges ── */
+    .badge {
+      border-radius: 20px; padding: 0.2rem 0.75rem;
+      font-weight: 600; font-size: 0.78rem; display: inline-block;
+    }
+    .badge-active   { background: #EAFAF0; color: #27AE60; }
+    .badge-inactive { background: #FFF0EB; color: var(--orange); }
+    .badge-leave    { background: #FFF8E6; color: #F39C12; }
+
+    /* ── Avatar ── */
+    .avatar {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: var(--navy); color: white;
+      display: inline-flex; align-items: center; justify-content: center;
+      font-size: 0.75rem; font-weight: 700; margin-right: 0.6rem;
+      flex-shrink: 0;
+    }
+    .name-cell { display: flex; align-items: center; }
+
+    /* ── Pagination ── */
+    .pagination {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1rem 1.5rem; border-top: 1px solid var(--border);
+      font-size: 0.85rem; color: var(--txt2);
+    }
+    .page-btns { display: flex; gap: 0.35rem; }
+    .page-btn {
+      width: 32px; height: 32px; border-radius: 6px; border: 1px solid var(--border);
+      background: var(--card); color: var(--txt); cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.82rem; font-family: inherit; transition: all 0.15s;
+    }
+    .page-btn:hover { background: var(--bg2); }
+    .page-btn.active { background: var(--navy); color: white; border-color: var(--navy); }
+    .page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  </style>
+</head>
+
+<body data-page="employees">
+
+  <!-- ══ SIDEBAR ══ -->
+  <aside id="sidebar">
+    <img src="Photo/AmexioPhoto.png" alt="Amexio" style="height:40px;width:100%;object-fit:contain;"/>
+    <nav class="sidebar-nav">
+      <a href="Home.html" class="nav-item" data-nav="home">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+          <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
+        </svg>Home
+      </a>
+      <a href="Employees.html" class="nav-item active">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+          <circle cx="9" cy="7" r="4"/>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
+        </svg>Employees
+      </a>
+      <a href="SickLeave.html" class="nav-item">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+        </svg>Sick Leave
+      </a>
+      <a href="training_budget.html" class="nav-item">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
+          <path d="M6 12v5c3 3 9 3 12 0v-5"/>
+        </svg>Training Budget
+      </a>
+    </nav>
+    <div class="sidebar-bottom">
+      <button class="upload-btn" onclick="alert('TODO: connect to backend upload endpoint')">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+          <polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/>
+          <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/>
+        </svg>Upload Data
+      </button>
+    </div>
+  </aside>
+
+  <!-- ══ MAIN CONTENT ══ -->
+  <div class="main-content">
+
+    <a href="home.html" class="back-link">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <polyline points="15 18 9 12 15 6"/>
+      </svg>Back to Dashboard
+    </a>
+
+    <h1>Employee Directory</h1>
+    <p class="subtitle">Complete overview of all employees</p>
+
+    <!-- KPI Cards -->
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-label">Total Employees</div>
+        <div class="kpi-value" id="kpi-total">—</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Active</div>
+        <div class="kpi-value green" id="kpi-active">—</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">On Sick Leave</div>
+        <div class="kpi-value orange" id="kpi-sick">—</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Departments</div>
+        <div class="kpi-value" id="kpi-depts">—</div>
+      </div>
+    </div>
+
+    <!-- Charts row -->
+    <div class="charts-row">
+      <div class="card" style="margin-bottom:0;">
+        <div class="card-header">Employees per Department</div>
+        <div class="card-body">
+          <canvas id="deptChart" height="180"></canvas>
+        </div>
+      </div>
+      <div class="card" style="margin-bottom:0;">
+        <div class="card-header">Fulltime vs Parttime</div>
+        <div class="card-body" style="display:flex;align-items:center;justify-content:center;">
+          <canvas id="contractChart" height="180"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Employee table -->
+    <div class="card" style="margin-top:1.5rem;">
+      <div class="card-header">
+        All Employees
+        <span id="table-count" style="font-size:0.82rem;color:var(--txt2);font-weight:400;"></span>
+      </div>
+
+      <!-- Search & filter toolbar -->
+      <div class="toolbar">
+        <input class="search-input" type="text" id="search-input"
+               placeholder="Search by name or department..."
+               oninput="filterTable()"/>
+        <select class="filter-select" id="dept-filter" onchange="filterTable()">
+          <option value="">All Departments</option>
+        </select>
+        <select class="filter-select" id="status-filter" onchange="filterTable()">
+          <option value="">All Statuses</option>
+          <option value="Active">Active</option>
+          <option value="Inactive">Inactive</option>
+        </select>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Department</th>
+            <th>Contract</th>
+            <th>Start Date</th>
+            <th>City</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="table-body">
+          <tr><td colspan="6" style="text-align:center;color:var(--txt2);padding:2rem;">Loading employees...</td></tr>
+        </tbody>
+      </table>
+
+      <!-- Pagination -->
+      <div class="pagination">
+        <span id="pagination-info">—</span>
+        <div class="page-btns" id="page-btns"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    const API_URL = "http://127.0.0.1:8000";
+    let allEmployees = [];
+    let filteredEmployees = [];
+    const PAGE_SIZE = 10;
+    let currentPage = 1;
+
+    // ── Load employees from GET /employees ──────────────────
+    async function loadEmployees() {
+      try {
+        const res = await fetch(`${API_URL}/employees`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        allEmployees = await res.json();
+        filteredEmployees = [...allEmployees];
+        buildKPIs();
+        buildCharts();
+        buildDeptFilter();
+        renderTable();
+      } catch(e) {
+        document.getElementById("table-body").innerHTML =
+          `<tr><td colspan="6" style="text-align:center;color:var(--red);padding:2rem;">
+            Could not reach backend. Make sure uvicorn is running.
+          </td></tr>`;
+      }
+    }
+
+    // ── KPI cards ───────────────────────────────────────────
+    function buildKPIs() {
+      const total   = allEmployees.length;
+      const active  = allEmployees.filter(e => e.status === "Active").length;
+      const sick    = allEmployees.filter(e => e.status === "Inactive").length;
+      const depts   = new Set(allEmployees.map(e => e.department)).size;
+      document.getElementById("kpi-total").textContent  = total;
+      document.getElementById("kpi-active").textContent = active;
+      document.getElementById("kpi-sick").textContent   = sick;
+      document.getElementById("kpi-depts").textContent  = depts;
+    }
+
+    // ── Charts ──────────────────────────────────────────────
+    function buildCharts() {
+      // Dept bar chart
+      const deptCounts = {};
+      allEmployees.forEach(e => { deptCounts[e.department] = (deptCounts[e.department] || 0) + 1; });
+      const deptLabels = Object.keys(deptCounts);
+      const deptData   = Object.values(deptCounts);
+
+      new Chart(document.getElementById("deptChart"), {
+        type: "bar",
+        data: {
+          labels: deptLabels,
+          datasets: [{
+            label: "Employees",
+            data: deptData,
+            backgroundColor: "#1B4965",
+            borderRadius: 5,
+            borderSkipped: false,
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { grid: { display: false }, ticks: { font: { family: "DM Sans", size: 11 } } },
+            y: { grid: { color: "#E0E4E8" }, ticks: { font: { family: "DM Sans", size: 11 }, stepSize: 1 } }
+          }
+        }
+      });
+
+      // Fulltime vs parttime donut
+      const ft = allEmployees.filter(e => e.contract >= 100).length;
+      const pt = allEmployees.length - ft;
+      new Chart(document.getElementById("contractChart"), {
+        type: "doughnut",
+        data: {
+          labels: ["Fulltime (100%)", "Parttime (<100%)"],
+          datasets: [{
+            data: [ft, pt],
+            backgroundColor: ["#FF6B35", "#1B4965"],
+            borderWidth: 0,
+          }]
+        },
+        options: {
+          responsive: true,
+          cutout: "65%",
+          plugins: {
+            legend: { position: "bottom", labels: { font: { family: "DM Sans", size: 11 }, padding: 16, usePointStyle: true } }
+          }
+        }
+      });
+    }
+
+    // ── Department filter dropdown ───────────────────────────
+    function buildDeptFilter() {
+      const depts = [...new Set(allEmployees.map(e => e.department))].sort();
+      const sel = document.getElementById("dept-filter");
+      depts.forEach(d => {
+        const opt = document.createElement("option");
+        opt.value = d; opt.textContent = d;
+        sel.appendChild(opt);
+      });
+    }
+
+    // ── Filter table ────────────────────────────────────────
+    function filterTable() {
+      const search = document.getElementById("search-input").value.toLowerCase();
+      const dept   = document.getElementById("dept-filter").value;
+      const status = document.getElementById("status-filter").value;
+      filteredEmployees = allEmployees.filter(e => {
+        const matchSearch = !search || e.name.toLowerCase().includes(search) || e.department.toLowerCase().includes(search);
+        const matchDept   = !dept   || e.department === dept;
+        const matchStatus = !status || e.status === status;
+        return matchSearch && matchDept && matchStatus;
+      });
+      currentPage = 1;
+      renderTable();
+    }
+
+    // ── Avatar color from name ───────────────────────────────
+    function avatarColor(name) {
+      const colors = ["#1B4965","#2C5F7A","#FF6B35","#4A90E2","#62C370","#FFB84D"];
+      let hash = 0;
+      for (const c of name) hash = (hash * 31 + c.charCodeAt(0)) & 0xffffffff;
+      return colors[Math.abs(hash) % colors.length];
+    }
+
+    // ── Render table page ────────────────────────────────────
+    function renderTable() {
+      const tbody = document.getElementById("table-body");
+      const total = filteredEmployees.length;
+      const start = (currentPage - 1) * PAGE_SIZE;
+      const end   = Math.min(start + PAGE_SIZE, total);
+      const page  = filteredEmployees.slice(start, end);
+
+      document.getElementById("table-count").textContent = `${total} employee${total !== 1 ? "s" : ""}`;
+
+      if (page.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--txt2);padding:2rem;">No employees found.</td></tr>`;
+        document.getElementById("pagination-info").textContent = "No results";
+        document.getElementById("page-btns").innerHTML = "";
+        return;
+      }
+
+      tbody.innerHTML = page.map(e => {
+        const initials = e.name.split(" ").map(w => w[0]).filter(Boolean).slice(0,2).join("").toUpperCase();
+        const badgeClass = e.status === "Active" ? "badge-active" : "badge-inactive";
+        return `<tr>
+          <td>
+            <div class="name-cell">
+              <div class="avatar" style="background:${avatarColor(e.name)}">${initials}</div>
+              <span style="font-weight:500">${e.name}</span>
+            </div>
+          </td>
+          <td style="color:var(--txt2)">${e.department || "—"}</td>
+          <td>${e.contract || "—"}%</td>
+          <td style="color:var(--txt2)">${e.start_date || "—"}</td>
+          <td style="color:var(--txt2)">${e.city || "—"}</td>
+          <td><span class="badge ${badgeClass}">${e.status}</span></td>
+        </tr>`;
+      }).join("");
+
+      // Pagination info
+      document.getElementById("pagination-info").textContent =
+        `Showing ${start + 1}–${end} of ${total} employees`;
+
+      // Pagination buttons
+      const totalPages = Math.ceil(total / PAGE_SIZE);
+      const pageBtns = document.getElementById("page-btns");
+      pageBtns.innerHTML = "";
+
+      // Prev
+      const prev = document.createElement("button");
+      prev.className = "page-btn"; prev.textContent = "‹";
+      prev.disabled = currentPage === 1;
+      prev.onclick = () => { currentPage--; renderTable(); };
+      pageBtns.appendChild(prev);
+
+      // Page numbers
+      for (let i = 1; i <= totalPages; i++) {
+        const btn = document.createElement("button");
+        btn.className = "page-btn" + (i === currentPage ? " active" : "");
+        btn.textContent = i;
+        btn.onclick = ((p) => () => { currentPage = p; renderTable(); })(i);
+        pageBtns.appendChild(btn);
+      }
+
+      // Next
+      const next = document.createElement("button");
+      next.className = "page-btn"; next.textContent = "›";
+      next.disabled = currentPage === totalPages;
+      next.onclick = () => { currentPage++; renderTable(); };
+      pageBtns.appendChild(next);
+    }
+
+    loadEmployees();
+  </script>
+</body>
+</html>

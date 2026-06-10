@@ -5,140 +5,364 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Amexio HR Dashboard — Training Budget</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
   <style>
-    * { font-family: 'DM Sans', sans-serif; }
-    :root { --navy:#1B2B3B; --orange:#E8642A; --light-bg:#F4F6F9; --border:#E2E8EF; --muted:#6B7E8F; }
-    body { background-color:var(--light-bg); }
+    /* ── Reset & base ─────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; font-family: 'DM Sans', sans-serif; }
+    body { background: #F8F9FA; color: #1A1F36; display: flex; min-height: 100vh; }
 
-    .time-tab { padding:.45rem 1.25rem; border-radius:8px; font-weight:600; font-size:.88rem; cursor:pointer; border:1px solid var(--border); background:white; color:var(--navy); transition:all .15s; }
-    .time-tab.active { background:var(--orange); color:white; border-color:var(--orange); }
+    /* ── Brand tokens ─────────────────────────────────────── */
+    :root {
+      --navy:        #1B4965;
+      --orange:      #FF6B35;
+      --orange-h:    #FF7A45;
+      --navy-acc:    #2C5F7A;
+      --bg:          #F8F9FA;
+      --card:        #ffffff;
+      --bg2:         #F0F2F5;
+      --border:      #E0E4E8;
+      --txt:         #1A1F36;
+      --txt2:        #5F6B7A;
+      --green:       #62C370;
+      --red:         #DC3545;
+      --cyan:        #00D9FF;
+      --sidebar-w:   240px;
+    }
 
-    .kpi-card { background:white; border-radius:12px; padding:1.25rem 1.5rem; border:1px solid var(--border); box-shadow:0 1px 3px rgba(0,0,0,.06); animation:fadeUp .4s ease both; }
-    .card { background:white; border-radius:12px; border:1px solid var(--border); box-shadow:0 1px 3px rgba(0,0,0,.06); overflow:hidden; animation:fadeUp .5s ease both; }
-    .card-header { padding:1.1rem 1.5rem; border-bottom:1px solid var(--border); font-weight:600; font-size:.95rem; color:var(--navy); }
+    /* ── Sidebar ──────────────────────────────────────────── */
+    #sidebar {
+      position: fixed;
+      top: 0; left: 0; bottom: 0;
+      width: var(--sidebar-w);
+      background: var(--navy);
+      display: flex;
+      flex-direction: column;
+      z-index: 100;
+    }
 
-    table { width:100%; border-collapse:collapse; }
-    thead th { background:var(--navy); color:white; padding:.8rem 1.25rem; text-align:left; font-size:.82rem; font-weight:600; }
-    tbody tr { border-bottom:1px solid var(--border); transition:background .1s; }
-    tbody tr:hover { background:#F7F9FB; }
-    tbody td { padding:.85rem 1.25rem; font-size:.88rem; color:var(--navy); }
-    .spent-val { color:var(--orange); font-weight:600; }
-    .util-badge { background:#EEF1F4; color:var(--navy); border-radius:20px; padding:.2rem .7rem; font-weight:600; font-size:.8rem; display:inline-block; }
+    .sidebar-logo {
+      padding: 1.5rem 1.25rem;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      color: white;
+      font-weight: 700;
+      font-size: 1rem;
+      letter-spacing: 0.3px;
+    }
+    .sidebar-logo span { color: var(--orange); }
 
-    .ai-card { background:var(--navy); border-radius:12px; padding:1.5rem; }
-    .summary-tab { padding:.4rem 1.1rem; border-radius:6px; font-size:.85rem; font-weight:600; cursor:pointer; color:#AABDCC; border:none; border-bottom:2px solid transparent; background:transparent; transition:all .15s; }
-    .summary-tab.active { color:var(--orange); border-bottom:2px solid var(--orange); }
-    .summary-panel { display:none; }
-    .summary-panel.active { display:block; }
-    .gen-btn { background:var(--orange); color:white; border:none; border-radius:8px; padding:.6rem 1.4rem; font-weight:600; font-size:.88rem; cursor:pointer; transition:opacity .15s; margin-top:1rem; }
-    .gen-btn:hover { opacity:.88; }
-    .loading-spinner { display:inline-block; width:14px; height:14px; border:2px solid rgba(255,255,255,.3); border-top-color:white; border-radius:50%; animation:spin .7s linear infinite; margin-right:.4rem; vertical-align:middle; }
-    @keyframes spin { to { transform:rotate(360deg); } }
+    .sidebar-nav {
+      flex: 1;
+      padding: 1rem 0.75rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+    }
 
-    @keyframes fadeUp { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
-    .kpi-card:nth-child(1){animation-delay:.05s} .kpi-card:nth-child(2){animation-delay:.1s} .kpi-card:nth-child(3){animation-delay:.15s} .kpi-card:nth-child(4){animation-delay:.2s}
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.7rem 1rem;
+      border-radius: 8px;
+      color: rgba(255,255,255,0.65);
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 500;
+      transition: all 0.15s;
+    }
+    .nav-item svg { width: 18px; height: 18px; flex-shrink: 0; }
+    .nav-item:hover { background: var(--navy-acc); color: white; }
+    .nav-item.active { background: var(--orange); color: white; }
+
+    .sidebar-bottom {
+      padding: 1rem 0.75rem 1.5rem;
+    }
+    .upload-btn {
+      width: 100%;
+      background: var(--orange);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      padding: 0.75rem 1rem;
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      font-family: inherit;
+      transition: background 0.15s;
+    }
+    .upload-btn:hover { background: var(--orange-h); }
+
+    /* ── Main content ─────────────────────────────────────── */
+    .main-content {
+      margin-left: var(--sidebar-w);
+      flex: 1;
+      padding: 2rem 2.5rem;
+      overflow-y: auto;
+    }
+
+    /* ── Page header ──────────────────────────────────────── */
+    .back-link {
+      color: var(--txt2); font-size: 0.85rem; text-decoration: none;
+      display: inline-flex; align-items: center; gap: 0.3rem; margin-bottom: 1rem;
+    }
+    .back-link:hover { color: var(--txt); }
+    h1 { font-size: 1.75rem; font-weight: 700; color: var(--txt); margin-bottom: 0.25rem; }
+    .subtitle { font-size: 0.9rem; color: var(--txt2); margin-bottom: 1.5rem; }
+
+    /* ── Time tabs ────────────────────────────────────────── */
+    .time-tabs { display: flex; gap: 0.5rem; margin-bottom: 1.75rem; }
+    .time-tab {
+      padding: 0.45rem 1.25rem; border-radius: 8px; font-weight: 600;
+      font-size: 0.88rem; cursor: pointer; border: 1px solid var(--border);
+      background: var(--card); color: var(--txt); font-family: inherit;
+      transition: all 0.15s;
+    }
+    .time-tab.active { background: var(--orange); color: white; border-color: var(--orange); }
+    .time-tab:not(.active):hover { background: var(--bg2); }
+
+    /* ── KPI grid ─────────────────────────────────────────── */
+    .kpi-grid {
+      display: grid; grid-template-columns: repeat(4,1fr);
+      gap: 1rem; margin-bottom: 1.75rem;
+    }
+    .kpi-card {
+      background: var(--card); border-radius: 12px;
+      padding: 1.25rem 1.5rem; border: 1px solid var(--border);
+      box-shadow: 0 1px 3px rgba(0,0,0,.06);
+    }
+    .kpi-card.accent-orange { border-left: 3px solid var(--orange); }
+    .kpi-card.accent-green  { border-left: 3px solid var(--green); }
+    .kpi-label { font-size: 0.78rem; color: var(--txt2); font-weight: 500; margin-bottom: 0.3rem; }
+    .kpi-value { font-size: 1.65rem; font-weight: 700; color: var(--txt); }
+    .kpi-sub   { font-size: 0.78rem; margin-top: 0.2rem; color: var(--txt2); }
+    .kpi-sub.up   { color: var(--green); font-weight: 600; }
+    .kpi-sub.down { color: var(--red);   font-weight: 600; }
+
+    /* ── Cards ────────────────────────────────────────────── */
+    .card {
+      background: var(--card); border-radius: 12px;
+      border: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,.06);
+      overflow: hidden; margin-bottom: 1.5rem;
+    }
+    .card-header {
+      padding: 1.1rem 1.5rem; border-bottom: 1px solid var(--border);
+      font-weight: 600; font-size: 0.95rem; color: var(--txt);
+    }
+    .card-body { padding: 1.25rem; }
+
+    /* ── Table ────────────────────────────────────────────── */
+    table { width: 100%; border-collapse: collapse; }
+    thead th {
+      background: var(--navy); color: white;
+      padding: 0.8rem 1.25rem; text-align: left;
+      font-size: 0.82rem; font-weight: 600;
+    }
+    tbody tr { border-bottom: 1px solid var(--border); transition: background 0.1s; }
+    tbody tr:hover { background: var(--bg); }
+    tbody td { padding: 0.85rem 1.25rem; font-size: 0.88rem; color: var(--txt); }
+    .spent-val { color: var(--orange); font-weight: 600; }
+    .util-badge {
+      background: var(--bg2); color: var(--txt);
+      border-radius: 20px; padding: 0.2rem 0.7rem;
+      font-weight: 600; font-size: 0.8rem; display: inline-block;
+    }
+
+    /* ── AI card ──────────────────────────────────────────── */
+    .ai-card {
+      background: var(--navy); border-radius: 12px;
+      padding: 1.5rem; margin-bottom: 1.75rem;
+    }
+    .ai-title {
+      color: white; font-weight: 700; font-size: 1rem;
+      margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;
+    }
+    .ai-tabs {
+      display: flex; border-bottom: 1px solid rgba(255,255,255,0.1);
+      margin-bottom: 1rem;
+    }
+    .sum-tab {
+      padding: 0.4rem 1.1rem; font-size: 0.85rem; font-weight: 600;
+      cursor: pointer; color: rgba(255,255,255,0.4); border: none;
+      border-bottom: 2px solid transparent; background: transparent;
+      font-family: inherit; transition: all 0.15s;
+    }
+    .sum-tab.active { color: var(--cyan); border-bottom: 2px solid var(--cyan); }
+    .sum-panel { display: none; }
+    .sum-panel.active { display: block; }
+    .sum-text { color: white; font-size: 0.9rem; line-height: 1.75; }
+
+    /* ── Buttons ──────────────────────────────────────────── */
+    .gen-btn {
+      background: var(--orange); color: white; border: none;
+      border-radius: 8px; padding: 0.6rem 1.4rem; font-weight: 600;
+      font-size: 0.88rem; cursor: pointer; margin-top: 1rem;
+      font-family: inherit; transition: background 0.15s;
+    }
+    .gen-btn:hover    { background: var(--orange-h); }
+    .gen-btn:disabled { opacity: 0.7; cursor: not-allowed; }
+
+    /* ── Section label ────────────────────────────────────── */
+    .section-label {
+      display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.85rem;
+    }
+    .section-label strong { font-size: 0.95rem; color: var(--txt); }
+    .badge {
+      font-size: 0.75rem; color: var(--txt2); background: var(--bg2);
+      padding: 0.15rem 0.6rem; border-radius: 20px; font-weight: 500;
+    }
+
+    /* ── Forecast grid ────────────────────────────────────── */
+    .forecast-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 1rem; }
+
+    /* ── Spinner ──────────────────────────────────────────── */
+    .spinner {
+      display: inline-block; width: 14px; height: 14px;
+      border: 2px solid rgba(255,255,255,0.3); border-top-color: white;
+      border-radius: 50%; animation: spin 0.7s linear infinite;
+      margin-right: 0.4rem; vertical-align: middle;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
   </style>
 </head>
-<body>
-<div style="display:flex;min-height:100vh;">
 
-  <!-- MAIN -->
-  <main style="flex:1;padding:2rem 2.5rem;overflow-y:auto;max-width:1200px;margin:0 auto;">
+<body data-page="training-budget">
 
-    <a href="#" style="color:var(--muted);font-size:.85rem;text-decoration:none;display:inline-flex;align-items:center;gap:.3rem;margin-bottom:1rem;">
-      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>Back to Dashboard
+  <!-- ══ SIDEBAR ══════════════════════════════════════════════ -->
+  <aside id="sidebar">
+   <div class="sidebar-logo">
+ <div class="sidebar-logo">
+  <img src="Photo/AmexioPhoto.png" alt="Amexio" style="height:40px;width:100%;object-fit:contain;"/>
+</div>
+</div>
+
+    <nav class="sidebar-nav">
+      <a href="Home.html" class="nav-item" data-nav="home">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+          <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
+        </svg>
+        Home
+      </a>
+      <a href="Employees.html" class="nav-item" data-nav="employees">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+          <circle cx="9" cy="7" r="4"/>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
+        </svg>
+        Employees
+      </a>
+      <a href="SickLeave.html" class="nav-item" data-nav="sick-leave">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+        </svg>
+        Sick Leave
+      </a>
+      <a href="training_budget.html" class="nav-item active" data-nav="training-budget">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
+          <path d="M6 12v5c3 3 9 3 12 0v-5"/>
+        </svg>
+        Training Budget
+      </a>
+    </nav>
+
+    <div class="sidebar-bottom">
+      <button class="upload-btn" onclick="alert('TODO: connect to backend upload endpoint')">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+          <polyline points="16 16 12 12 8 16"/>
+          <line x1="12" y1="12" x2="12" y2="21"/>
+          <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/>
+        </svg>
+        Upload Data
+      </button>
+    </div>
+  </aside>
+
+  <!-- ══ MAIN CONTENT ═════════════════════════════════════════ -->
+  <div class="main-content">
+
+    <a href="home.html" class="back-link">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <polyline points="15 18 9 12 15 6"/>
+      </svg>
+      Back to Dashboard
     </a>
 
-    <h1 style="font-size:1.75rem;font-weight:700;color:var(--navy);margin:0 0 .25rem;">Training Budget Overview</h1>
-    <p style="color:var(--muted);font-size:.9rem;margin:0 0 1.5rem;">Department training budget allocation and spending</p>
+    <h1>Training Budget Overview</h1>
+    <p class="subtitle">Department training budget allocation and spending</p>
 
     <!-- Time tabs -->
-    <div style="display:flex;gap:.5rem;margin-bottom:1.75rem;">
+    <div class="time-tabs">
       <button class="time-tab active" onclick="setTimePeriod(this,'monthly')">Monthly</button>
       <button class="time-tab" onclick="setTimePeriod(this,'quarterly')">Quarterly</button>
       <button class="time-tab" onclick="setTimePeriod(this,'yearly')">Yearly</button>
     </div>
 
-    <!--
-      ═══════════════════════════════════════════════════════════════════
-      KPI CARDS
-      CHANGED: removed hardcoded values, added id attributes so
-      loadData() can inject real values from GET /data
-      ═══════════════════════════════════════════════════════════════════
-    -->
-    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.75rem;">
+    <!-- KPI Cards -->
+    <div class="kpi-grid">
       <div class="kpi-card">
-        <div style="font-size:.78rem;color:var(--muted);font-weight:500;margin-bottom:.3rem;">Total Budget</div>
-        <div style="font-size:1.65rem;font-weight:700;color:var(--navy);" id="kpi-total-budget">Loading...</div>
-        <div style="font-size:.78rem;color:var(--muted);margin-top:.2rem;">allocated this period</div>
+        <div class="kpi-label">Total Budget</div>
+        <div class="kpi-value" id="kpi-total-budget">Loading...</div>
+        <div class="kpi-sub">allocated this period</div>
       </div>
       <div class="kpi-card">
-        <div style="font-size:.78rem;color:var(--muted);font-weight:500;margin-bottom:.3rem;">Total Spent</div>
-        <div style="font-size:1.65rem;font-weight:700;color:var(--navy);" id="kpi-total-spent">Loading...</div>
-        <div style="font-size:.78rem;color:#27AE60;font-weight:600;margin-top:.2rem;" id="kpi-spent-change">—</div>
+        <div class="kpi-label">Total Spent</div>
+        <div class="kpi-value" id="kpi-total-spent">Loading...</div>
+        <div class="kpi-sub up" id="kpi-spent-change">—</div>
       </div>
       <div class="kpi-card">
-        <div style="font-size:.78rem;color:var(--muted);font-weight:500;margin-bottom:.3rem;">Remaining</div>
-        <div style="font-size:1.65rem;font-weight:700;color:var(--navy);" id="kpi-remaining">Loading...</div>
-        <div style="font-size:.78rem;color:var(--muted);margin-top:.2rem;">left to spend</div>
+        <div class="kpi-label">Remaining</div>
+        <div class="kpi-value" id="kpi-remaining">Loading...</div>
+        <div class="kpi-sub">left to spend</div>
       </div>
       <div class="kpi-card">
-        <div style="font-size:.78rem;color:var(--muted);font-weight:500;margin-bottom:.3rem;">Utilisation</div>
-        <div style="font-size:1.65rem;font-weight:700;color:var(--navy);" id="kpi-utilisation">Loading...</div>
-        <div style="font-size:.78rem;color:#27AE60;font-weight:600;margin-top:.2rem;" id="kpi-util-change">—</div>
+        <div class="kpi-label">Utilisation</div>
+        <div class="kpi-value" id="kpi-utilisation">Loading...</div>
+        <div class="kpi-sub up" id="kpi-util-change">—</div>
       </div>
     </div>
 
-    <!--
-      ═══════════════════════════════════════════════════════════════════
-      AI INSIGHTS — LLM INTEGRATION
-      CHANGED: moved to top (above chart and table).
-      CHANGED: Generate Insights button now calls POST /summary via
-      the generateSummary() function and injects the real Mistral
-      response into panel-brief and panel-standard.
-      The placeholder text is replaced by real LLM output on click.
-      ═══════════════════════════════════════════════════════════════════
-    -->
-    <div class="ai-card" style="margin-bottom:1.75rem;">
-      <div style="color:white;font-weight:700;font-size:1rem;margin-bottom:1rem;display:flex;align-items:center;gap:.5rem;">
-        <svg width="18" height="18" fill="none" stroke="#E8642A" stroke-width="2" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+    <!-- AI Insights -->
+    <div class="ai-card">
+      <div class="ai-title">
+        <svg width="18" height="18" fill="none" stroke="var(--cyan)" stroke-width="2" viewBox="0 0 24 24">
+          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+        </svg>
         AI Insights — Training Budget Analysis
       </div>
-      <div style="display:flex;gap:0;border-bottom:1px solid rgba(255,255,255,.1);margin-bottom:1rem;">
-        <button class="summary-tab active" onclick="switchTab(this,'brief')">Brief Summary</button>
-        <button class="summary-tab" onclick="switchTab(this,'standard')">Standard Summary</button>
+      <div class="ai-tabs">
+        <button class="sum-tab active" onclick="switchTab(this,'brief')">Brief Summary</button>
+        <button class="sum-tab" onclick="switchTab(this,'standard')">Standard Summary</button>
       </div>
-
-      <!-- Brief summary panel — content replaced by real LLM output on Generate click -->
-      <div class="summary-panel active" id="panel-brief">
-        <p style="color:#FFFFFF;font-size:.9rem;line-height:1.75;">
-          Click "Generate Insights" to generate a real AI summary using the local Mistral model.
-        </p>
+      <div class="sum-panel active" id="panel-brief">
+        <p class="sum-text">Click "Generate Insights" to generate a real AI summary using the local Mistral model.</p>
       </div>
-
-      <!-- Standard summary panel — content replaced by real LLM output on Generate click -->
-      <div class="summary-panel" id="panel-standard">
-        <p style="color:#FFFFFF;font-size:.9rem;line-height:1.75;">
-          Click "Generate Insights" to generate a real AI summary using the local Mistral model.
-        </p>
+      <div class="sum-panel" id="panel-standard">
+        <p class="sum-text">Click "Generate Insights" to generate a real AI summary using the local Mistral model.</p>
       </div>
-
-      <!-- CHANGED: button now calls real POST /summary endpoint via generateSummary() -->
       <button class="gen-btn" onclick="generateSummary()">Generate Insights</button>
     </div>
 
-    <!-- Chart card — populated by buildChart() with real data from GET /data -->
-    <div class="card" style="margin-bottom:1.5rem;">
+    <!-- Chart -->
+    <div class="card">
       <div class="card-header">Budget Utilization by Department</div>
-      <div style="padding:1.25rem;">
+      <div class="card-body">
         <canvas id="budgetChart" height="90"></canvas>
       </div>
     </div>
 
-    <!-- Department table — populated by buildTable() with real data from GET /data -->
-    <div class="card" style="margin-bottom:1.5rem;">
+    <!-- Table -->
+    <div class="card">
       <div class="card-header">Department Breakdown</div>
       <table>
         <thead>
@@ -148,260 +372,160 @@
           </tr>
         </thead>
         <tbody id="table-body">
-          <tr><td colspan="5" style="text-align:center;color:var(--muted);padding:1.5rem;">Loading data...</td></tr>
+          <tr><td colspan="5" style="text-align:center;color:var(--txt2);padding:1.5rem;">Loading data...</td></tr>
         </tbody>
       </table>
     </div>
 
-    <!--
-      ML FORECAST — moved to bottom
-      These values are still hardcoded placeholders.
-      REPLACE: connect to GET /forecast once predict.py is integrated into main.py
-    -->
+    <!-- ML Forecast -->
     <div style="margin-bottom:1.5rem;">
-      <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.85rem;">
-        <svg width="16" height="16" fill="none" stroke="#E8642A" stroke-width="2" viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
-        <span style="font-weight:700;font-size:.95rem;color:var(--navy);">ML Forecast — Next Month</span>
-        <span style="font-size:.75rem;color:var(--muted);background:#EEF1F4;padding:.15rem .6rem;border-radius:20px;font-weight:500;">Predicted</span>
+      <div class="section-label">
+        <svg width="16" height="16" fill="none" stroke="var(--orange)" stroke-width="2" viewBox="0 0 24 24">
+          <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
+          <polyline points="17 6 23 6 23 12"/>
+        </svg>
+        <strong>ML Forecast — Next Month</strong>
+        <span class="badge">Predicted</span>
       </div>
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;">
-        <!-- REPLACE: inject forecast.kpi.predicted_spend from GET /forecast -->
-        <div class="kpi-card" style="border-left:3px solid #E8642A;">
-          <div style="font-size:.75rem;color:var(--muted);font-weight:500;margin-bottom:.3rem;">Predicted Spend</div>
-          <div style="font-size:1.45rem;font-weight:700;color:var(--navy);" id="fc-spend">—</div>
-          <div style="font-size:.75rem;color:#E8642A;font-weight:600;margin-top:.2rem;" id="fc-spend-change">—</div>
+      <div class="forecast-grid">
+        <div class="kpi-card accent-orange">
+          <div class="kpi-label">Predicted Spend</div>
+          <div class="kpi-value" id="fc-spend">—</div>
+          <div class="kpi-sub up" id="fc-spend-change">—</div>
         </div>
-        <!-- REPLACE: inject forecast.kpi.predicted_utilisation from GET /forecast -->
-        <div class="kpi-card" style="border-left:3px solid #E8642A;">
-          <div style="font-size:.75rem;color:var(--muted);font-weight:500;margin-bottom:.3rem;">Predicted Utilisation</div>
-          <div style="font-size:1.45rem;font-weight:700;color:var(--navy);" id="fc-util">—</div>
-          <div style="font-size:.75rem;color:#E8642A;font-weight:600;margin-top:.2rem;" id="fc-util-change">—</div>
+        <div class="kpi-card accent-orange">
+          <div class="kpi-label">Predicted Utilisation</div>
+          <div class="kpi-value" id="fc-util">—</div>
+          <div class="kpi-sub up" id="fc-util-change">—</div>
         </div>
-        <!-- REPLACE: inject forecast.kpi.predicted_remaining from GET /forecast -->
-        <div class="kpi-card" style="border-left:3px solid #27AE60;">
-          <div style="font-size:.75rem;color:var(--muted);font-weight:500;margin-bottom:.3rem;">Predicted Remaining</div>
-          <div style="font-size:1.45rem;font-weight:700;color:var(--navy);" id="fc-remaining">—</div>
-          <div style="font-size:.75rem;color:#E74C3C;font-weight:600;margin-top:.2rem;" id="fc-remaining-change">—</div>
+        <div class="kpi-card accent-green">
+          <div class="kpi-label">Predicted Remaining</div>
+          <div class="kpi-value" id="fc-remaining">—</div>
+          <div class="kpi-sub down" id="fc-remaining-change">—</div>
         </div>
-        <!-- REPLACE: inject forecast.kpi.highest_spender from GET /forecast -->
-        <div class="kpi-card" style="border-left:3px solid #27AE60;">
-          <div style="font-size:.75rem;color:var(--muted);font-weight:500;margin-bottom:.3rem;">Highest Predicted Spender</div>
-          <div style="font-size:1.45rem;font-weight:700;color:var(--navy);" id="fc-highest">—</div>
-          <div style="font-size:.75rem;color:var(--muted);font-weight:500;margin-top:.2rem;" id="fc-highest-amount">—</div>
+        <div class="kpi-card accent-green">
+          <div class="kpi-label">Highest Predicted Spender</div>
+          <div class="kpi-value" id="fc-highest">—</div>
+          <div class="kpi-sub" id="fc-highest-amount">—</div>
         </div>
       </div>
     </div>
 
-  </main>
-</div>
+  </div>
 
-<script>
-  // ═══════════════════════════════════════════════════════════════════════
-  // API URL — backend must be running via: uvicorn main:app --reload
-  // CHANGE this if your backend runs on a different port
-  // ═══════════════════════════════════════════════════════════════════════
-  const API_URL = "http://127.0.0.1:8000";
+  <script>
+    const API_URL = "http://127.0.0.1:8000";
 
-  // ═══════════════════════════════════════════════════════════════════════
-  // CHANGED: loadData() — fetches real data from GET /data
-  // Replaces all hardcoded KPI values, table rows and chart data
-  // Previously: all values were hardcoded in the HTML and JS arrays
-  // Now: values come from the FastAPI backend via data.py
-  // ═══════════════════════════════════════════════════════════════════════
-  async function loadData() {
-    try {
-      const res = await fetch(`${API_URL}/data`);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
-
-      // Inject KPI values into the card elements
-      document.getElementById("kpi-total-budget").textContent = "€" + data.total_budget.toLocaleString("nl-NL", { maximumFractionDigits: 0 });
-      document.getElementById("kpi-total-spent").textContent  = "€" + data.total_spent.toLocaleString("nl-NL", { maximumFractionDigits: 0 });
-      document.getElementById("kpi-remaining").textContent    = "€" + data.total_remaining.toLocaleString("nl-NL", { maximumFractionDigits: 0 });
-      document.getElementById("kpi-utilisation").textContent  = data.utilisation_pct + "%";
-
-      // Build table and chart with real department data
-      buildTable(data.by_department);
-      buildChart(data.by_department);
-
-    } catch(e) {
-      console.error("Could not load data from backend:", e);
-      document.getElementById("table-body").innerHTML =
-        `<tr><td colspan="5" style="text-align:center;color:#E74C3C;padding:1.5rem;">
-          Could not reach backend at ${API_URL}. Make sure uvicorn is running.
-        </td></tr>`;
-    }
-  }
-
-  // ═══════════════════════════════════════════════════════════════════════
-  // CHANGED: buildTable() — builds table rows from real department data
-  // Previously: rows were hardcoded with employee names
-  // Now: rows are generated dynamically from by_department array from /data
-  // ═══════════════════════════════════════════════════════════════════════
-  function buildTable(departments) {
-    const tbody = document.getElementById("table-body");
-    tbody.innerHTML = "";
-    departments.forEach(d => {
-      tbody.innerHTML += `<tr>
-        <td style="font-weight:600">${d.name}</td>
-        <td>€${d.budget.toLocaleString("nl-NL", { maximumFractionDigits: 0 })}</td>
-        <td class="spent-val">€${d.spent.toLocaleString("nl-NL", { maximumFractionDigits: 0 })}</td>
-        <td>€${d.remaining.toLocaleString("nl-NL", { maximumFractionDigits: 0 })}</td>
-        <td><span class="util-badge">${d.utilisation_pct}%</span></td>
-      </tr>`;
-    });
-  }
-
-  // ═══════════════════════════════════════════════════════════════════════
-  // CHANGED: buildChart() — builds Chart.js graph from real department data
-  // Previously: chart used hardcoded departmentData array
-  // Now: chart is built dynamically from by_department array from /data
-  // Destroys previous chart instance before rebuilding to avoid duplicates
-  // ═══════════════════════════════════════════════════════════════════════
-  function buildChart(departments) {
-    const ctx = document.getElementById("budgetChart").getContext("2d");
-
-    // Destroy existing chart instance if it exists (prevents duplicates on reload)
-    if (window.budgetChartInstance) {
-      window.budgetChartInstance.destroy();
-    }
-
-    window.budgetChartInstance = new Chart(ctx, {
-      data: {
-        labels: departments.map(d => d.name),
-        datasets: [
-          {
-            type:"bar", label:"Spent (€)",
-            data: departments.map(d => d.spent),
-            backgroundColor:"#E8642A",
-            borderRadius:5, borderSkipped:false,
-            yAxisID:"y"
-          },
-          {
-            type:"bar", label:"Remaining (€)",
-            data: departments.map(d => d.remaining),
-            backgroundColor:"#1B2B3B",
-            borderRadius:5, borderSkipped:false,
-            yAxisID:"y"
-          },
-          {
-            type:"bar", label:"Utilization (%)",
-            data: departments.map(d => d.utilisation_pct),
-            backgroundColor:"#27AE60",
-            borderRadius:5, borderSkipped:false,
-            yAxisID:"y2"
-          }
-        ]
-      },
-      options: {
-        responsive:true,
-        interaction:{ mode:"index", intersect:false },
-        plugins:{
-          legend:{ position:"bottom", labels:{ font:{family:"DM Sans",size:12}, padding:20, usePointStyle:true } },
-          tooltip:{ backgroundColor:"#1B2B3B", titleFont:{family:"DM Sans",weight:"600"}, bodyFont:{family:"DM Sans"}, padding:12, cornerRadius:8 }
-        },
-        scales:{
-          x:{ grid:{display:false}, ticks:{font:{family:"DM Sans",size:11}} },
-          y:{ position:"left", grid:{color:"#EEF1F4"}, ticks:{font:{family:"DM Sans",size:11}, callback:v=>"€"+v} },
-          y2:{ position:"right", grid:{drawOnChartArea:false}, min:0, max:100, ticks:{font:{family:"DM Sans",size:11}, callback:v=>v+"%"} }
-        }
+    async function loadData() {
+      try {
+        const res = await fetch(`${API_URL}/data`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        document.getElementById("kpi-total-budget").textContent = "€" + data.total_budget.toLocaleString("nl-NL", {maximumFractionDigits:0});
+        document.getElementById("kpi-total-spent").textContent  = "€" + data.total_spent.toLocaleString("nl-NL", {maximumFractionDigits:0});
+        document.getElementById("kpi-remaining").textContent    = "€" + data.total_remaining.toLocaleString("nl-NL", {maximumFractionDigits:0});
+        document.getElementById("kpi-utilisation").textContent  = data.utilisation_pct + "%";
+        buildTable(data.by_department);
+        buildChart(data.by_department);
+      } catch(e) {
+        document.getElementById("table-body").innerHTML =
+          `<tr><td colspan="5" style="text-align:center;color:var(--red);padding:1.5rem;">
+            Could not reach backend. Make sure uvicorn is running.
+          </td></tr>`;
       }
-    });
-  }
-
-  // ═══════════════════════════════════════════════════════════════════════
-  // CHANGED: generateSummary() — calls real POST /summary endpoint
-  // Previously: button showed a placeholder alert
-  // Now: sends POST request to /summary, Mistral (via llm.py + ollama)
-  // generates a real Brief and Standard summary based on live data,
-  // and injects the response text into panel-brief and panel-standard
-  // ═══════════════════════════════════════════════════════════════════════
-  async function generateSummary() {
-    const btn = document.querySelector(".gen-btn");
-    btn.innerHTML = '<span class="loading-spinner"></span> Generating...';
-    btn.disabled = true;
-
-    try {
-      const res = await fetch(`${API_URL}/summary`, { method: "POST" });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const result = await res.json();
-
-      // Inject real LLM-generated summaries into the panels
-      document.getElementById("panel-brief").querySelector("p").textContent    = result.brief;
-      document.getElementById("panel-standard").querySelector("p").textContent = result.standard;
-
-    } catch(e) {
-      console.error("LLM request failed:", e);
-      document.getElementById("panel-brief").querySelector("p").textContent =
-        "Could not generate summary. Make sure uvicorn is running and Ollama has the mistral model pulled.";
-    } finally {
-      btn.innerHTML = "Generate Insights";
-      btn.disabled = false;
     }
-  }
 
-  // Time period switcher
-  // REPLACE: fetch new data from GET /data?period=monthly|quarterly|yearly once backend supports it
-  function setTimePeriod(btn, period) {
-    document.querySelectorAll(".time-tab").forEach(b => b.classList.remove("active"));
-    btn.classList.add("active");
-    console.log("TODO: fetch data for period:", period);
-  }
-
-  // Summary tab switcher
-  function switchTab(btn, tab) {
-    document.querySelectorAll(".summary-tab").forEach(b => b.classList.remove("active"));
-    document.querySelectorAll(".summary-panel").forEach(p => p.classList.remove("active"));
-    btn.classList.add("active");
-    document.getElementById("panel-"+tab).classList.add("active");
-  }
-
-  // ═══════════════════════════════════════════════════════════════════════
-  // CHANGED: loadForecast() — fetches real ML predictions from GET /forecast
-  // Previously: forecast cards showed hardcoded — placeholders
-  // Now: values come from predict.py via the FastAPI backend
-  // ═══════════════════════════════════════════════════════════════════════
-  async function loadForecast() {
-    try {
-      const res = await fetch(`${API_URL}/forecast`);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
-      const kpi = data.kpi;
-
-      // Predicted Spend
-      document.getElementById("fc-spend").textContent =
-        "€" + kpi.predicted_spend.toLocaleString("nl-NL", { maximumFractionDigits: 0 });
-      document.getElementById("fc-spend-change").textContent =
-        (kpi.predicted_spend_change_pct >= 0 ? "↑ +" : "↓ ") + kpi.predicted_spend_change_pct + "% vs this month";
-
-      // Predicted Utilisation
-      document.getElementById("fc-util").textContent = kpi.predicted_utilisation + "%";
-      document.getElementById("fc-util-change").textContent =
-        (kpi.predicted_utilisation_change_pct >= 0 ? "↑ +" : "↓ ") + kpi.predicted_utilisation_change_pct + "% vs this month";
-
-      // Predicted Remaining
-      document.getElementById("fc-remaining").textContent =
-        "€" + kpi.predicted_remaining.toLocaleString("nl-NL", { maximumFractionDigits: 0 });
-      document.getElementById("fc-remaining-change").textContent =
-        (kpi.predicted_remaining_change_pct >= 0 ? "↑ +" : "↓ ") + kpi.predicted_remaining_change_pct + "% vs this month";
-
-      // Highest Predicted Spender
-      document.getElementById("fc-highest").textContent = kpi.highest_spender;
-      document.getElementById("fc-highest-amount").textContent =
-        "est. €" + kpi.highest_spender_amount.toLocaleString("nl-NL", { maximumFractionDigits: 0 }) + " next month";
-
-    } catch(e) {
-      console.error("Could not load forecast:", e);
+    function buildTable(departments) {
+      const tbody = document.getElementById("table-body");
+      tbody.innerHTML = "";
+      departments.forEach(d => {
+        tbody.innerHTML += `<tr>
+          <td style="font-weight:600">${d.name}</td>
+          <td>€${d.budget.toLocaleString("nl-NL",{maximumFractionDigits:0})}</td>
+          <td class="spent-val">€${d.spent.toLocaleString("nl-NL",{maximumFractionDigits:0})}</td>
+          <td>€${d.remaining.toLocaleString("nl-NL",{maximumFractionDigits:0})}</td>
+          <td><span class="util-badge">${d.utilisation_pct}%</span></td>
+        </tr>`;
+      });
     }
-  }
 
-  // ═══════════════════════════════════════════════════════════════════════
-  // CHANGED: loadData() and loadForecast() are called on page load
-  // Previously: data was hardcoded and always visible
-  // Now: page fetches live data from GET /data and GET /forecast when it opens
-  // ═══════════════════════════════════════════════════════════════════════
-  loadData();
-  loadForecast();
-</script>
+    function buildChart(departments) {
+      const ctx = document.getElementById("budgetChart").getContext("2d");
+      if (window.chartInstance) window.chartInstance.destroy();
+      window.chartInstance = new Chart(ctx, {
+        data: {
+          labels: departments.map(d => d.name),
+          datasets: [
+            { type:"bar", label:"Spent (€)",      data:departments.map(d=>d.spent),           backgroundColor:"#FF6B35", borderRadius:5, borderSkipped:false, yAxisID:"y" },
+            { type:"bar", label:"Remaining (€)",   data:departments.map(d=>d.remaining),       backgroundColor:"#1B4965", borderRadius:5, borderSkipped:false, yAxisID:"y" },
+            { type:"bar", label:"Utilization (%)", data:departments.map(d=>d.utilisation_pct), backgroundColor:"#62C370", borderRadius:5, borderSkipped:false, yAxisID:"y2" }
+          ]
+        },
+        options: {
+          responsive:true,
+          interaction:{mode:"index",intersect:false},
+          plugins:{
+            legend:{position:"bottom",labels:{font:{family:"DM Sans",size:12},padding:20,usePointStyle:true}},
+            tooltip:{backgroundColor:"#1B4965",titleFont:{family:"DM Sans",weight:"600"},bodyFont:{family:"DM Sans"},padding:12,cornerRadius:8}
+          },
+          scales:{
+            x:{grid:{display:false},ticks:{font:{family:"DM Sans",size:11}}},
+            y:{position:"left",grid:{color:"#E0E4E8"},ticks:{font:{family:"DM Sans",size:11},callback:v=>"€"+v}},
+            y2:{position:"right",grid:{drawOnChartArea:false},min:0,max:100,ticks:{font:{family:"DM Sans",size:11},callback:v=>v+"%"}}
+          }
+        }
+      });
+    }
+
+    async function generateSummary() {
+      const btn = document.querySelector(".gen-btn");
+      btn.innerHTML = '<span class="spinner"></span> Generating...';
+      btn.disabled = true;
+      try {
+        const res = await fetch(`${API_URL}/summary`, {method:"POST"});
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const result = await res.json();
+        document.getElementById("panel-brief").querySelector("p").textContent    = result.brief;
+        document.getElementById("panel-standard").querySelector("p").textContent = result.standard;
+      } catch(e) {
+        document.getElementById("panel-brief").querySelector("p").textContent =
+          "Could not generate summary. Make sure uvicorn is running and Ollama has the model pulled.";
+      } finally {
+        btn.innerHTML = "Generate Insights";
+        btn.disabled = false;
+      }
+    }
+
+    async function loadForecast() {
+      try {
+        const res = await fetch(`${API_URL}/forecast`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const {kpi} = await res.json();
+        document.getElementById("fc-spend").textContent          = "€" + kpi.predicted_spend.toLocaleString("nl-NL",{maximumFractionDigits:0});
+        document.getElementById("fc-spend-change").textContent   = (kpi.predicted_spend_change_pct>=0?"↑ +":"↓ ")+kpi.predicted_spend_change_pct+"% vs this month";
+        document.getElementById("fc-util").textContent           = kpi.predicted_utilisation+"%";
+        document.getElementById("fc-util-change").textContent    = (kpi.predicted_utilisation_change_pct>=0?"↑ +":"↓ ")+kpi.predicted_utilisation_change_pct+"% vs this month";
+        document.getElementById("fc-remaining").textContent      = "€" + kpi.predicted_remaining.toLocaleString("nl-NL",{maximumFractionDigits:0});
+        document.getElementById("fc-remaining-change").textContent = (kpi.predicted_remaining_change_pct>=0?"↑ +":"↓ ")+kpi.predicted_remaining_change_pct+"% vs this month";
+        document.getElementById("fc-highest").textContent        = kpi.highest_spender;
+        document.getElementById("fc-highest-amount").textContent = "est. €"+kpi.highest_spender_amount.toLocaleString("nl-NL",{maximumFractionDigits:0})+" next month";
+      } catch(e) { console.error("Forecast error:", e); }
+    }
+
+    function setTimePeriod(btn, period) {
+      document.querySelectorAll(".time-tab").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+    }
+
+    function switchTab(btn, tab) {
+      document.querySelectorAll(".sum-tab").forEach(b => b.classList.remove("active"));
+      document.querySelectorAll(".sum-panel").forEach(p => p.classList.remove("active"));
+      btn.classList.add("active");
+      document.getElementById("panel-"+tab).classList.add("active");
+    }
+
+    loadData();
+    loadForecast();
+  </script>
 </body>
 </html>
