@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Amexio HR Dashboard — Sick Leave</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; font-family: 'DM Sans', sans-serif; }
+    body { background: #F8F9FA; color: #1A1F36; display: flex; min-height: 100vh; }
+    :root {
+      --navy: #1B4965; --orange: #FF6B35; --orange-h: #FF7A45;
+      --navy-acc: #2C5F7A; --bg: #F8F9FA; --card: #ffffff;
+      --bg2: #F0F2F5; --border: #E0E4E8; --txt: #1A1F36;
+      --txt2: #5F6B7A; --sidebar-w: 240px;
+    }
+    #sidebar {
+      position: fixed; top: 0; left: 0; bottom: 0;
+      width: var(--sidebar-w); background: var(--navy);
+      display: flex; flex-direction: column; z-index: 100;
+    }
+    .sidebar-logo { padding: 1.5rem 1.25rem; border-bottom: 1px solid rgba(255,255,255,0.1); color: white; font-weight: 700; font-size: 1rem; }
+    .sidebar-logo span { color: var(--orange); }
+    .sidebar-nav { flex: 1; padding: 1rem 0.75rem; display: flex; flex-direction: column; gap: 0.2rem; }
+    .nav-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.7rem 1rem; border-radius: 8px; color: rgba(255,255,255,0.65); text-decoration: none; font-size: 0.9rem; font-weight: 500; transition: all 0.15s; }
+    .nav-item svg { width: 18px; height: 18px; flex-shrink: 0; }
+    .nav-item:hover { background: var(--navy-acc); color: white; }
+    .nav-item.active { background: var(--orange); color: white; }
+    .sidebar-bottom { padding: 1rem 0.75rem 1.5rem; }
+    .upload-btn { width: 100%; background: var(--orange); color: white; border: none; border-radius: 10px; padding: 0.75rem 1rem; font-weight: 600; font-size: 0.9rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.5rem; font-family: inherit; transition: background 0.15s; }
+    .upload-btn:hover { background: var(--orange-h); }
+    .main-content { margin-left: var(--sidebar-w); flex: 1; padding: 2rem 2.5rem; overflow-y: auto; }
+    .back-link { color: var(--txt2); font-size: 0.85rem; text-decoration: none; display: inline-flex; align-items: center; gap: 0.3rem; margin-bottom: 1rem; }
+    .back-link:hover { color: var(--txt); }
+    h1 { font-size: 1.75rem; font-weight: 700; color: var(--txt); margin-bottom: 0.25rem; }
+    .subtitle { font-size: 0.9rem; color: var(--txt2); margin-bottom: 1.5rem; }
+  </style>
+</head>
+<body data-page="sick-leave">
+  <aside id="sidebar">
+      <img src="Photo/AmexioPhoto.png" alt="Amexio" style="height:40px;width:100%;object-fit:contain;"/>
+    <nav class="sidebar-nav">
+      <a href="Home.html" class="nav-item">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        Home
+      </a>
+      <a href="Employees.html" class="nav-item">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Employees
+      </a>
+      <a href="SickLeave.html" class="nav-item active">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        Sick Leave
+      </a>
+      <a href="training_budget.html" class="nav-item">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+        Training Budget
+      </a>
+    </nav>
+    <div class="sidebar-bottom">
+      <button class="upload-btn">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
+        Upload Data
+      </button>
+    </div>
+  </aside>
+  <div class="main-content">
+    <a href="home.html" class="back-link">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+      Back to Dashboard
+    </a>
+    <h1>Sick Leave Overview</h1>
+    <p class="subtitle">Track and monitor employee absences</p>
+    <!-- content comes here -->
+  </div>
+</body>
+</html>
