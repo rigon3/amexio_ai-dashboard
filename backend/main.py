@@ -38,18 +38,16 @@ def get_employees():
     return df.rename(columns={"Naam":"name","Afdeling":"department","Fulltime / parttime (%)":"contract","Indienstdatum":"start_date","Woonplaats":"city"})[["name","department","contract","start_date","city","status"]].to_dict(orient="records")
 
 @app.get("/data")
-def data():
-    return aggregate_training_budget()
+def data(period: str = "monthly", month: str | None = None):
+    return aggregate_training_budget(period=period, month=month)
 
 
 @app.post("/summary")
-def summary():
-    data = aggregate_training_budget()
+def summary(view: str = "training_budget", period: str = "monthly", month: str | None = None):
     try:
-        result = generate_summary(data)
+        return generate_summary(view=view, period=period, month=month)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"LLM error: {e}")
-    return result
+        raise HTTPException(status_code=500, detail=f"Summary error: {e}")
 
 
 @app.get("/forecast")

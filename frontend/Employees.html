@@ -64,6 +64,14 @@
 
     /* ── Main ── */
     .main-content { margin-left: var(--sidebar-w); flex: 1; padding: 2rem 2.5rem; overflow-y: auto; }
+
+    /* ── Two-column content: data left (~3/4), AI summary right (~1/4) ── */
+    .content-cols { display: grid; grid-template-columns: 3fr 1fr; gap: 1.5rem; align-items: start; }
+    .content-side { position: sticky; top: 1rem; }
+    @media (max-width: 1024px) {
+      .content-cols { grid-template-columns: 1fr; }
+      .content-side { position: static; }
+    }
     .back-link {
       color: var(--txt2); font-size: 0.85rem; text-decoration: none;
       display: inline-flex; align-items: center; gap: 0.3rem; margin-bottom: 1rem;
@@ -219,6 +227,10 @@
     <h1>Employee Directory</h1>
     <p class="subtitle">Complete overview of all employees</p>
 
+    <div class="content-cols">
+      <!-- LEFT: data -->
+      <div class="content-main">
+
     <!-- KPI Cards -->
     <div class="kpi-grid">
       <div class="kpi-card">
@@ -300,8 +312,17 @@
       </div>
     </div>
 
+      </div><!-- /.content-main -->
+
+      <!-- RIGHT: AI summary (components/aiSummary.js) -->
+      <aside class="content-side">
+        <div id="ai-summary"></div>
+      </aside>
+    </div><!-- /.content-cols -->
+
   </div>
 
+  <script src="components/aiSummary.js"></script>
   <script>
     const API_URL = "http://127.0.0.1:8000";
     let allEmployees = [];
@@ -494,6 +515,13 @@
       next.onclick = () => { currentPage++; renderTable(); };
       pageBtns.appendChild(next);
     }
+
+    AISummary.mount({
+      container: "#ai-summary",
+      view: "employees",
+      title: "Workforce Analysis",
+      apiUrl: API_URL,
+    });
 
     loadEmployees();
   </script>

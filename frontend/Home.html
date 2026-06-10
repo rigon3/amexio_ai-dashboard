@@ -33,6 +33,17 @@
     .main-content { margin-left: var(--sidebar-w); flex: 1; padding: 2rem 2.5rem; overflow-y: auto; }
     h1 { font-size: 1.75rem; font-weight: 700; color: var(--txt); margin-bottom: 0.25rem; }
     .subtitle { font-size: 0.9rem; color: var(--txt2); margin-bottom: 1.5rem; }
+
+    /* ═══ SCRUM-78/86 shared component styles — DO NOT EDIT ═══ */
+    .page-header-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 1rem; }
+    .page-header-row .time-tabs { margin-bottom: 1.5rem; }
+    .time-tabs { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; }
+    .time-tab { padding: 0.45rem 1.25rem; border-radius: 8px; font-weight: 600; font-size: 0.88rem; cursor: pointer; border: 1px solid var(--border); background: var(--card); color: var(--txt); font-family: inherit; transition: all 0.15s; }
+    .time-tab.active { background: var(--orange); color: #fff; border-color: var(--orange); }
+    .time-tab:not(.active):hover { background: var(--bg2); }
+    .content-cols { display: grid; grid-template-columns: 3fr 1fr; gap: 1.5rem; align-items: start; }
+    .content-side { position: sticky; top: 1rem; }
+    @media (max-width: 1024px) { .content-cols { grid-template-columns: 1fr; } .content-side { position: static; } }
   </style>
 </head>
 <body data-page="home">
@@ -64,9 +75,59 @@
     </div>
   </aside>
   <div class="main-content">
-    <h1>HR Dashboard</h1>
-    <p class="subtitle">Overview of key HR metrics and insights</p>
-    <!-- content comes here -->
+
+    <div class="page-header-row">
+      <div>
+        <h1>HR Dashboard</h1>
+        <p class="subtitle">Overview of key HR metrics and insights</p>
+      </div>
+      <!-- ⛔ SCRUM-78 time filter — DO NOT EDIT (rendered by components/timeFilter.js) -->
+      <div class="time-tabs" id="time-filter"></div>
+    </div>
+
+    <div class="content-cols">
+      <div class="content-main">
+        <!-- ════════════════════════════════════════════════════════════════
+             TEAMMATES: add the Home page content (KPIs, charts, tables) HERE,
+             inside .content-main. Leave the #time-filter slot above and the
+             AI summary <aside> below untouched (SCRUM-78 / SCRUM-86).
+             ════════════════════════════════════════════════════════════════ -->
+        <p class="subtitle">Content coming soon.</p>
+      </div>
+
+      <!-- ⛔ SCRUM-86 AI summary — DO NOT EDIT (rendered by components/aiSummary.js) -->
+      <aside class="content-side">
+        <div id="ai-summary"></div>
+      </aside>
+    </div>
+
   </div>
+
+  <!-- ⛔ SCRUM-78/86 components — DO NOT EDIT. When the backend 'home' view is
+       implemented (backend/llm.py STUB_VIEWS → VIEW_BUILDERS), the summary
+       starts producing real output automatically. -->
+  <script src="components/timeFilter.js"></script>
+  <script src="components/aiSummary.js"></script>
+  <script>
+    const API_URL = "http://127.0.0.1:8000";
+    let currentPeriod = "monthly";
+
+    const summary = AISummary.mount({
+      container: "#ai-summary",
+      view: "home",
+      title: "HR Overview",
+      apiUrl: API_URL,
+      getPeriod: () => currentPeriod,
+    });
+
+    TimeFilter.mount({
+      container: "#time-filter",
+      onChange: (period) => {
+        currentPeriod = period;
+        summary.reset();
+        // TODO (teammates): reload this page's data for `period`.
+      },
+    });
+  </script>
 </body>
 </html>
