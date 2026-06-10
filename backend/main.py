@@ -15,6 +15,7 @@ from predict import forecast
 # Paths
 DATA_DIR = Path(__file__).parent / "data"
 MODEL_PATH = Path(__file__).parent.parent / "model" / "model_random_forest.pkl"
+EMPLOYEE_PATH = DATA_DIR / "medewerkers_overzicht_synthetic.xlsx"
 
 # App must be defined before any routes
 app = FastAPI()
@@ -31,7 +32,7 @@ app.add_middleware(
 @app.get("/employees")
 def get_employees():
     import pandas as pd
-    df = pd.read_excel(DATA_DIR / "medewerkers_overzicht.xlsx")
+    df = pd.read_excel(EMPLOYEE_PATH)
     df["Naam"] = (df["Voornaam"].fillna("") + " " + df["Tussenvoegsel"].fillna("") + " " + df["Achternaam"].fillna("")).str.strip().str.replace("  ", " ")
     df["status"] = df["Actief"].apply(lambda x: "Active" if x else "Inactive")
     df["Indienstdatum"] = pd.to_datetime(df["Indienstdatum"]).dt.strftime("%d-%m-%Y")
