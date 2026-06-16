@@ -64,6 +64,15 @@
 
     /* ── Main ── */
     .main-content { margin-left: var(--sidebar-w); flex: 1; padding: 2rem 2.5rem; overflow-y: auto; }
+
+    /* ── Two-column content: data left (~3/4), AI summary right (~1/4) ── */
+    .content-cols { display: grid; grid-template-columns: 3fr 1fr; gap: 1.5rem; align-items: start; }
+    .content-main, .content-side { min-width: 0; }  /* allow columns to shrink; prevents wide table/charts overflowing */
+    .content-side { position: sticky; top: 1rem; }
+    @media (max-width: 1024px) {
+      .content-cols { grid-template-columns: 1fr; }
+      .content-side { position: static; }
+    }
     .back-link {
       color: var(--txt2); font-size: 0.85rem; text-decoration: none;
       display: inline-flex; align-items: center; gap: 0.3rem; margin-bottom: 1rem;
@@ -170,39 +179,31 @@
 
   <!-- ══ SIDEBAR ══ -->
   <aside id="sidebar">
-    <img src="Photo/AmexioPhoto.png" alt="Amexio" style="height:40px;width:100%;object-fit:contain;"/>
+    <div class="sidebar-logo">
+      <img src="Photo/AmexioPhoto.png" alt="Amexio" style="height:40px;width:100%;object-fit:contain;"/>
+    </div>
     <nav class="sidebar-nav">
-      <a href="Home.html" class="nav-item" data-nav="home">
-        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
-          <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
-        </svg>Home
+      <a href="Home.html" class="nav-item">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg>
+        Home
       </a>
       <a href="Employees.html" class="nav-item active">
-        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-          <circle cx="9" cy="7" r="4"/>
-          <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
-        </svg>Employees
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Employees
       </a>
       <a href="SickLeave.html" class="nav-item">
-        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
-        </svg>Sick Leave
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        Sick Leave
       </a>
       <a href="training_budget.html" class="nav-item">
-        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
-          <path d="M6 12v5c3 3 9 3 12 0v-5"/>
-        </svg>Training Budget
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+        Training Budget
       </a>
     </nav>
     <div class="sidebar-bottom">
       <button class="upload-btn" onclick="alert('TODO: connect to backend upload endpoint')">
-        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-          <polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/>
-          <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/>
-        </svg>Upload Data
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
+        Upload Data
       </button>
     </div>
   </aside>
@@ -218,6 +219,10 @@
 
     <h1>Employee Directory</h1>
     <p class="subtitle">Complete overview of all employees</p>
+
+    <div class="content-cols">
+      <!-- LEFT: data -->
+      <div class="content-main">
 
     <!-- KPI Cards -->
     <div class="kpi-grid">
@@ -300,8 +305,17 @@
       </div>
     </div>
 
+      </div><!-- /.content-main -->
+
+      <!-- RIGHT: AI summary (components/aiSummary.js) -->
+      <aside class="content-side">
+        <div id="ai-summary"></div>
+      </aside>
+    </div><!-- /.content-cols -->
+
   </div>
 
+  <script src="components/aiSummary.js"></script>
   <script>
     const API_URL = "http://127.0.0.1:8000";
     let allEmployees = [];
@@ -494,6 +508,13 @@
       next.onclick = () => { currentPage++; renderTable(); };
       pageBtns.appendChild(next);
     }
+
+    AISummary.mount({
+      container: "#ai-summary",
+      view: "employees",
+      title: "Workforce Analysis",
+      apiUrl: API_URL,
+    });
 
     loadEmployees();
   </script>

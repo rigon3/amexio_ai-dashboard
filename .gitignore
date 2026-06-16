@@ -1,6 +1,10 @@
 # Handoff / internal planning docs
 CLAUDE_CODE_HANDOFF.md
 
+# Generated synthetic monthly training-budget data (recreate with
+# backend/generate_monthly_data.py)
+backend/data/opleiding_monthly/
+
 # Python
 __pycache__/
 *.py[cod]
