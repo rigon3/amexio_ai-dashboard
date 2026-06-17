@@ -24,8 +24,8 @@ import joblib
 
 
 # CONFIG
-DEFAULT_EXCEL = "IKB_overview_export_synthetic.xlsx"
-DEFAULT_MODEL = "model_random_forest.pkl"
+DEFAULT_EXCEL = "backend/data/IKB_overview_export_synthetic.xlsx" 
+DEFAULT_MODEL = "model/model_random_forest.pkl"
 
 DEPARTMENTS = sorted(["CX", "ECX", "Marketing", "Recruitment", "Sales", "Support"])
 DEPT_MAP = {d: i for i, d in enumerate(DEPARTMENTS)}
